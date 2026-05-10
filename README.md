@@ -5,6 +5,7 @@
 ![Status](https://img.shields.io/badge/status-in%20progress-blue)
 ![.NET](https://img.shields.io/badge/.NET-8.0-purple)
 ![Azure](https://img.shields.io/badge/Azure-App%20Service-blue)
+> 🌐 [Live Demo](https://trackeee-app-f4auhacrcdhqbxbn.southafricanorth-01.azurewebsites.net)
 
 ## What it does
 
@@ -40,6 +41,8 @@ Multi-tenant — each freelancer or agency gets their own isolated workspace. On
 ## Status
 
 🚧 **In active development** — building in public.
+
+🌐 **Live demo:** https://trackeee-app-f4auhacrcdhqbxbn.southafricanorth-01.azurewebsites.net
 
 Follow progress via commits and the project board.
 
