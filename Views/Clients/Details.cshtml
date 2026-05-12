@@ -1,0 +1,36 @@
+﻿@model TracKeee.Models.Client
+
+@{
+    ViewData["Title"] = "Client Details";
+}
+
+<h1>@Model.Name</h1>
+<hr />
+
+<dl class="row">
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.ContactPerson)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.ContactPerson)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Email)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Email)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Phone)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Phone)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.VatNumber)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.VatNumber)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Address)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Address)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Notes)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Notes)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.CreatedAt)</dt>
+    <dd class="col-sm-9">@Model.CreatedAt.ToString("dd MMM yyyy")</dd>
+</dl>
+
+<div class="mt-4">
+    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Edit</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+</div>
