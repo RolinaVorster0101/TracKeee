@@ -48,14 +48,48 @@ Follow progress via commits and the project board.
 
 ## Running Locally
 
+### Prerequisites
+- .NET 8 SDK
+- SQL Server LocalDB (installed with Visual Studio)
+- A Brevo account for email sending (free tier)
+
+### Setup
+
+1. Clone the repository:
 ```bash
-git clone https://github.com/RolinaVorster0101/TracKeee
-cd TracKeee
-dotnet restore
-dotnet run
+   git clone https://github.com/RolinaVorster0101/TracKeee
+   cd TracKeee
 ```
 
-*Full setup instructions coming as the project develops.*
+2. Create an `appsettings.Development.json` file in the project root with the following structure:
+```json
+   {
+     "ConnectionStrings": {
+       "ApplicationDbContextConnection": "Server=(localdb)\\mssqllocaldb;Database=TracKeee;Trusted_Connection=True;MultipleActiveResultSets=true"
+     },
+     "BrevoSmtp": {
+       "Server": "smtp-relay.brevo.com",
+       "Port": 587,
+       "Username": "YOUR_BREVO_USERNAME",
+       "Password": "YOUR_BREVO_SMTP_KEY",
+       "FromEmail": "YOUR_VERIFIED_SENDER_EMAIL",
+       "FromName": "TracKeee"
+     }
+   }
+```
+
+3. Restore packages and run migrations:
+```bash
+   dotnet restore
+   dotnet ef database update
+```
+
+4. Run the app:
+```bash
+   dotnet run
+```
+
+The app will be available at `https://localhost:7151`.
 
 ## Author
 
