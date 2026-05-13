@@ -1,0 +1,69 @@
+﻿@model IEnumerable<TracKeee.Models.Project>
+
+@{
+    ViewData["Title"] = "Projects";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Projects</h1>
+    <a asp-action="Create" class="btn btn-primary">+ Add Project</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        You don't have any projects yet. <a asp-action="Create">Add your first project</a> to get started.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>@Html.DisplayNameFor(model => model.Name)</th>
+                    <th>@Html.DisplayNameFor(model => model.Client)</th>
+                    <th>@Html.DisplayNameFor(model => model.HourlyRate)</th>
+                    <th>@Html.DisplayNameFor(model => model.Status)</th>
+                    <th>@Html.DisplayNameFor(model => model.DueDate)</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td><strong>@Html.DisplayFor(modelItem => item.Name)</strong></td>
+                        <td>@Html.DisplayFor(modelItem => item.Client!.Name)</td>
+                        <td>R @item.HourlyRate.ToString("N2")</td>
+                        <td>
+                            <span class="badge @GetStatusBadgeClass(item.Status)">
+                                @item.Status
+                            </span>
+                        </td>
+                        <td>@(item.DueDate?.ToString("dd MMM yyyy") ?? "-")</td>
+                        <td class="text-end">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">View</a>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@functions {
+    string GetStatusBadgeClass(TracKeee.Models.ProjectStatus status)
+    {
+        return status switch
+        {
+            TracKeee.Models.ProjectStatus.Active => "bg-success",
+            TracKeee.Models.ProjectStatus.OnHold => "bg-warning text-dark",
+            TracKeee.Models.ProjectStatus.Completed => "bg-secondary",
+            TracKeee.Models.ProjectStatus.Cancelled => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}

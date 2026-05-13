@@ -1,0 +1,38 @@
+﻿@model TracKeee.Models.Project
+
+@{
+    ViewData["Title"] = "Delete Project";
+}
+
+<h1>Delete Project</h1>
+
+<div class="alert alert-warning">
+    <strong>Are you sure you want to delete this project?</strong><br />
+    This action cannot be undone.
+</div>
+
+<dl class="row">
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Name)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Name)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Client)</dt>
+    <dd class="col-sm-9">@Model.Client?.Name</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.HourlyRate)</dt>
+    <dd class="col-sm-9">R @Model.HourlyRate.ToString("N2")</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Status)</dt>
+    <dd class="col-sm-9">@Model.Status</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.StartDate)</dt>
+    <dd class="col-sm-9">@(Model.StartDate?.ToString("dd MMM yyyy") ?? "-")</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.DueDate)</dt>
+    <dd class="col-sm-9">@(Model.DueDate?.ToString("dd MMM yyyy") ?? "-")</dd>
+</dl>
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Delete Project</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
