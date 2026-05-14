@@ -32,6 +32,12 @@ namespace TracKeee.Models
         [Display(Name = "Invoiced")]
         public bool IsInvoiced { get; set; } = false;
 
+        [Display(Name = "Invoice")]
+        public int? InvoiceId { get; set; }
+
+        [ForeignKey("InvoiceId")]
+        public Invoice? Invoice { get; set; }
+
         [Display(Name = "Created")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

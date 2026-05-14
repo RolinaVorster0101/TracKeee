@@ -1,0 +1,30 @@
+﻿@{
+    ViewData["Title"] = "Generate Invoice";
+}
+
+<h1>Generate Invoice</h1>
+<hr />
+
+<p>Select a client to generate an invoice from their uninvoiced time entries.</p>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Generate" method="post">
+            <div class="form-group mb-3">
+                <label class="control-label">Client</label>
+                <select name="ClientId" class="form-select" required>
+                    <option value="">-- Select a client --</option>
+                    @foreach (var item in (SelectList)ViewBag.ClientId)
+                    {
+                        <option value="@item.Value">@item.Text</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Generate Invoice</button>
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>

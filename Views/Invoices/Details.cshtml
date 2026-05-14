@@ -1,0 +1,137 @@
+﻿@model TracKeee.Models.Invoice
+
+@{
+    ViewData["Title"] = $"Invoice {Model.InvoiceNumber}";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Invoice @Model.InvoiceNumber</h1>
+    <span class="badge fs-6 @GetStatusBadgeClass(Model.Status)">@Model.Status</span>
+</div>
+<hr />
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h5>Bill To</h5>
+        <strong>@Model.Client?.Name</strong><br />
+        @if (!string.IsNullOrEmpty(Model.Client?.ContactPerson))
+        {
+            <span>@Model.Client.ContactPerson</span>
+        
+            <br />
+        }
+        @if (!string.IsNullOrEmpty(Model.Client?.Email))
+        {
+            <span>@Model.Client.Email</span>
+        
+            <br />
+        }
+        @if (!string.IsNullOrEmpty(Model.Client?.Address))
+        {
+            <span>@Model.Client.Address</span>
+        
+            <br />
+        }
+        @if (!string.IsNullOrEmpty(Model.Client?.VatNumber))
+        {
+            <span>VAT: @Model.Client.VatNumber</span>
+        }
+    </div>
+    <div class="col-md-6 text-md-end">
+        <dl class="row justify-content-end">
+            <dt class="col-sm-5">Issue Date</dt>
+            <dd class="col-sm-5">@Model.IssueDate.ToString("dd MMM yyyy")</dd>
+
+            <dt class="col-sm-5">Due Date</dt>
+            <dd class="col-sm-5">@Model.DueDate.ToString("dd MMM yyyy")</dd>
+        </dl>
+    </div>
+</div>
+
+<h5>Time Entries</h5>
+<div class="table-responsive mb-4">
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Project</th>
+                <th>Description</th>
+                <th class="text-end">Hours</th>
+                <th class="text-end">Rate</th>
+                <th class="text-end">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var entry in Model.TimeEntries.OrderBy(t => t.Date))
+            {
+                <tr>
+                    <td>@entry.Date.ToString("dd MMM yyyy")</td>
+                    <td>@entry.Project?.Name</td>
+                    <td>@(entry.Description ?? "-")</td>
+                    <td class="text-end">@entry.Hours.ToString("N2")</td>
+                    <td class="text-end">R @((entry.Project?.HourlyRate ?? 0).ToString("N2"))</td>
+                    <td class="text-end">R @((entry.Hours * (entry.Project?.HourlyRate ?? 0)).ToString("N2"))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="row justify-content-end">
+    <div class="col-md-4">
+        <table class="table table-sm">
+            <tr>
+                <td><strong>Subtotal</strong></td>
+                <td class="text-end">R @Model.Subtotal.ToString("N2")</td>
+            </tr>
+            <tr>
+                <td><strong>VAT (@Model.VatRate%)</strong></td>
+                <td class="text-end">R @Model.VatAmount.ToString("N2")</td>
+            </tr>
+            <tr class="table-dark">
+                <td><strong>Total</strong></td>
+                <td class="text-end"><strong>R @Model.Total.ToString("N2")</strong></td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Notes))
+{
+    <div class="mb-4">
+        <strong>Notes:</strong><br />
+        @Model.Notes
+    </div>
+}
+
+<div class="mt-4">
+    @if (Model.Status == TracKeee.Models.InvoiceStatus.Draft)
+    {
+        <form asp-action="MarkAsSent" asp-route-id="@Model.Id" method="post" class="d-inline">
+            <button type="submit" class="btn btn-primary">Mark as Sent</button>
+        </form>
+    }
+    @if (Model.Status == TracKeee.Models.InvoiceStatus.Sent)
+    {
+        <form asp-action="MarkAsPaid" asp-route-id="@Model.Id" method="post" class="d-inline">
+            <button type="submit" class="btn btn-success">Mark as Paid</button>
+        </form>
+    }
+    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Delete</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+</div>
+
+@functions {
+    string GetStatusBadgeClass(TracKeee.Models.InvoiceStatus status)
+    {
+        return status switch
+        {
+            TracKeee.Models.InvoiceStatus.Draft => "bg-warning text-dark",
+            TracKeee.Models.InvoiceStatus.Sent => "bg-primary",
+            TracKeee.Models.InvoiceStatus.Paid => "bg-success",
+            TracKeee.Models.InvoiceStatus.Overdue => "bg-danger",
+            TracKeee.Models.InvoiceStatus.Cancelled => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+}
