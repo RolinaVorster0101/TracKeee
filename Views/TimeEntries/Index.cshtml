@@ -1,0 +1,69 @@
+﻿@model IEnumerable<TracKeee.Models.TimeEntry>
+
+@{
+    ViewData["Title"] = "Time Entries";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Time Entries</h1>
+    <a asp-action="Create" class="btn btn-primary">+ Log Time</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        You don't have any time entries yet. <a asp-action="Create">Log your first hours</a> to get started.
+    </div>
+}
+else
+{
+    <div class="mb-3 text-muted">
+        Total: <strong>@Model.Sum(t => t.Hours).ToString("N2") hours</strong> logged
+        &middot; <strong>R @Model.Where(t => !t.IsInvoiced).Sum(t => t.Hours * (t.Project?.HourlyRate ?? 0)).ToString("N2")</strong> uninvoiced
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>@Html.DisplayNameFor(model => model.Date)</th>
+                    <th>Client / Project</th>
+                    <th>@Html.DisplayNameFor(model => model.Description)</th>
+                    <th class="text-end">@Html.DisplayNameFor(model => model.Hours)</th>
+                    <th class="text-end">Amount</th>
+                    <th>@Html.DisplayNameFor(model => model.IsInvoiced)</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr class="@(item.IsInvoiced ? "table-light text-muted" : "")">
+                        <td>@item.Date.ToString("dd MMM yyyy")</td>
+                        <td>
+                            <strong>@item.Project?.Client?.Name</strong><br />
+                            <small>@item.Project?.Name</small>
+                        </td>
+                        <td>@(item.Description ?? "-")</td>
+                        <td class="text-end">@item.Hours.ToString("N2")</td>
+                        <td class="text-end">R @((item.Hours * (item.Project?.HourlyRate ?? 0)).ToString("N2"))</td>
+                        <td>
+                            @if (item.IsInvoiced)
+                            {
+                                <span class="badge bg-secondary">Invoiced</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Pending</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

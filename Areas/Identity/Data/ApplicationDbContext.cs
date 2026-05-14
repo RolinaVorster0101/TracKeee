@@ -14,6 +14,7 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<Client> Clients { get; set; }
     public DbSet<Project> Projects { get; set; }
+    public DbSet<TimeEntry> TimeEntries { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
