@@ -57,6 +57,13 @@ public class HomeController : Controller
             ViewBag.TotalInvoices = await _context.Invoices
                 .CountAsync(i => i.UserId == userId);
 
+            ViewBag.RecentProjects = await _context.Projects
+                            .Include(p => p.Client)
+                            .Where(p => p.UserId == userId)
+                            .OrderByDescending(p => p.CreatedAt)
+                            .Take(5)
+                            .ToListAsync();
+
             ViewBag.RecentTimeEntries = await _context.TimeEntries
                 .Include(t => t.Project)
                     .ThenInclude(p => p!.Client)

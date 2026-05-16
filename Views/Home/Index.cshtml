@@ -163,6 +163,53 @@
             </div>
         </div>
     </div>
+
+    <!-- Recent Projects -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <strong>Recent Projects</strong>
+                    <a asp-controller="Projects" asp-action="Index" class="btn btn-sm btn-outline-secondary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    @{
+                        var recentProjects = ViewBag.RecentProjects as List<Project>;
+                    }
+                    @if (recentProjects != null && recentProjects.Any())
+                    {
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Project</th>
+                                    <th>Client</th>
+                                    <th class="text-end">Hourly Rate</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var project in recentProjects)
+                                {
+                                    <tr>
+                                        <td><strong>@project.Name</strong></td>
+                                        <td>@project.Client?.Name</td>
+                                        <td class="text-end">R @project.HourlyRate.ToString("N2")</td>
+                                        <td>
+                                            <span class="badge @GetProjectStatusBadge(project.Status)">@project.Status</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <div class="p-3 text-muted">No projects yet. <a asp-controller="Projects" asp-action="Create">Add your first project.</a></div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 }
 else
 {
@@ -203,6 +250,17 @@ else
             InvoiceStatus.Paid => "bg-success",
             InvoiceStatus.Overdue => "bg-danger",
             InvoiceStatus.Cancelled => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+    string GetProjectStatusBadge(ProjectStatus status)
+    {
+        return status switch
+        {
+            ProjectStatus.Active => "bg-success",
+            ProjectStatus.OnHold => "bg-warning text-dark",
+            ProjectStatus.Completed => "bg-secondary",
+            ProjectStatus.Cancelled => "bg-danger",
             _ => "bg-secondary"
         };
     }
