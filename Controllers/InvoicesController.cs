@@ -49,6 +49,10 @@ namespace TracKeee.Controllers
                 .FirstOrDefaultAsync(i => i.Id == id && i.UserId == userId);
 
             if (invoice == null) return NotFound();
+
+            ViewBag.BusinessProfile = await _context.BusinessProfiles
+                .FirstOrDefaultAsync(p => p.UserId == userId);
+
             return View(invoice);
         }
 
@@ -323,6 +327,9 @@ namespace TracKeee.Controllers
                 TempData["Message"] = "This invoice has already been paid.";
             }
 
+            ViewBag.BusinessProfile = await _context.BusinessProfiles
+                .FirstOrDefaultAsync(p => p.UserId == invoice.UserId);
+
             return View(invoice);
         }
 
@@ -365,6 +372,20 @@ namespace TracKeee.Controllers
 
             TempData["Message"] = "Unable to create payment. Please try again later.";
             return RedirectToAction(nameof(PayInvoice), new { id });
+        }
+
+        [AllowAnonymous]
+        public async Task<IActionResult> BusinessLogo(string userId)
+        {
+            var profile = await _context.BusinessProfiles
+                .FirstOrDefaultAsync(p => p.UserId == userId);
+
+            if (profile?.LogoData != null && profile.LogoContentType != null)
+            {
+                return File(profile.LogoData, profile.LogoContentType);
+            }
+
+            return NotFound();
         }
     }
 }

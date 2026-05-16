@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = $"Pay Invoice {Model.InvoiceNumber}";
     Layout = "_Layout";
+    var profile = ViewBag.BusinessProfile as TracKeee.Models.BusinessProfile;
 }
 
 <div class="row justify-content-center mt-4">
@@ -10,7 +11,15 @@
         <div class="card shadow-sm">
             <div class="card-body">
                 <div class="text-center mb-4">
-                    <h2>TracKeee</h2>
+                    @if (profile?.LogoData != null)
+                    {
+                        <img src="@Url.Action("BusinessLogo", "Invoices", new { userId = Model.UserId })" alt="Logo" style="max-height: 60px;" class="mb-2" /><br />
+                    }
+                    @if (profile?.LogoData == null)
+                    {
+                        <img src="~/images/logo.svg" alt="TracKeee" height="40" class="mb-2" /><br />
+                    }
+                    <h2>@(profile?.BusinessName ?? "TracKeee")</h2>
                     <p class="text-muted">Invoice Payment</p>
                 </div>
 
@@ -28,6 +37,10 @@
                     <div class="col-md-6 text-md-end">
                         <h5>Bill To</h5>
                         <p class="mb-0"><strong>@Model.Client?.Name</strong></p>
+                        @if (!string.IsNullOrEmpty(Model.Client?.ContactPerson))
+                        {
+                            <p class="mb-0 text-muted">@Model.Client.ContactPerson</p>
+                        }
                         @if (!string.IsNullOrEmpty(Model.Client?.Email))
                         {
                             <p class="mb-0 text-muted">@Model.Client.Email</p>
@@ -81,6 +94,21 @@
                     </div>
                 </div>
 
+                @if (profile != null && !string.IsNullOrEmpty(profile.BankName))
+                {
+                    <div class="mb-4">
+                        <strong>Banking Details</strong><br />
+                        <span>Bank: @profile.BankName</span><br />
+                        @if (!string.IsNullOrEmpty(profile.AccountType))
+                        {
+                            <span>Account Type: @profile.AccountType</span><br />
+                        }
+                        <span>Account: @profile.AccountNumber</span><br />
+                        <span>Branch: @profile.BranchCode</span><br />
+                        <span>Reference: @Model.InvoiceNumber</span>
+                    </div>
+                }
+
                 @if (Model.Status != TracKeee.Models.InvoiceStatus.Paid)
                 {
                     <div class="text-center">
@@ -99,6 +127,9 @@
                     </div>
                 }
             </div>
+        </div>
+        <div class="text-center mt-3">
+            <small class="text-muted">Powered by TracKeee</small>
         </div>
     </div>
 </div>

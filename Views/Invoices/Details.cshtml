@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = $"Invoice {Model.InvoiceNumber}";
+    var profile = ViewBag.BusinessProfile as TracKeee.Models.BusinessProfile;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -12,39 +13,58 @@
 
 <div class="row mb-4">
     <div class="col-md-6">
+        @if (profile != null)
+        {
+            @if (profile.LogoData != null)
+            {
+                <img src="@Url.Action("BusinessLogo", "Invoices", new { userId = Model.UserId })" alt="Logo" style="max-height: 60px;" class="mb-2" /><br />
+            }
+            <strong class="fs-5">@profile.BusinessName</strong><br />
+            @if (!string.IsNullOrEmpty(profile.ContactName))
+            {
+                <span>@profile.ContactName</span><br />
+            }
+            @if (!string.IsNullOrEmpty(profile.Email))
+            {
+                <span>@profile.Email</span><br />
+            }
+            @if (!string.IsNullOrEmpty(profile.Phone))
+            {
+                <span>@profile.Phone</span><br />
+            }
+            @if (!string.IsNullOrEmpty(profile.Address))
+            {
+                <span>@profile.Address</span><br />
+            }
+            @if (!string.IsNullOrEmpty(profile.VatNumber))
+            {
+                <span>VAT: @profile.VatNumber</span>
+            }
+        }
+    </div>
+    <div class="col-md-6 text-md-end">
         <h5>Bill To</h5>
         <strong>@Model.Client?.Name</strong><br />
         @if (!string.IsNullOrEmpty(Model.Client?.ContactPerson))
         {
-            <span>@Model.Client.ContactPerson</span>
-        
-            <br />
+            <span>@Model.Client.ContactPerson</span><br />
         }
         @if (!string.IsNullOrEmpty(Model.Client?.Email))
         {
-            <span>@Model.Client.Email</span>
-        
-            <br />
+            <span>@Model.Client.Email</span><br />
         }
         @if (!string.IsNullOrEmpty(Model.Client?.Address))
         {
-            <span>@Model.Client.Address</span>
-        
-            <br />
+            <span>@Model.Client.Address</span><br />
         }
         @if (!string.IsNullOrEmpty(Model.Client?.VatNumber))
         {
-            <span>VAT: @Model.Client.VatNumber</span>
+            <span>VAT: @Model.Client.VatNumber</span><br />
         }
-    </div>
-    <div class="col-md-6 text-md-end">
-        <dl class="row justify-content-end">
-            <dt class="col-sm-5">Issue Date</dt>
-            <dd class="col-sm-5">@Model.IssueDate.ToString("dd MMM yyyy")</dd>
-
-            <dt class="col-sm-5">Due Date</dt>
-            <dd class="col-sm-5">@Model.DueDate.ToString("dd MMM yyyy")</dd>
-        </dl>
+        <div class="mt-3">
+            <span class="text-muted">Issue Date:</span> @Model.IssueDate.ToString("dd MMM yyyy")<br />
+            <span class="text-muted">Due Date:</span> @Model.DueDate.ToString("dd MMM yyyy")
+        </div>
     </div>
 </div>
 
@@ -95,6 +115,21 @@
         </table>
     </div>
 </div>
+
+@if (profile != null && !string.IsNullOrEmpty(profile.BankName))
+{
+    <div class="mb-4">
+        <strong>Banking Details</strong><br />
+        <span>Bank: @profile.BankName</span><br />
+        @if (!string.IsNullOrEmpty(profile.AccountType))
+        {
+            <span>Account Type: @profile.AccountType</span><br />
+        }
+        <span>Account: @profile.AccountNumber</span><br />
+        <span>Branch: @profile.BranchCode</span><br />
+        <span>Reference: @Model.InvoiceNumber</span>
+    </div>
+}
 
 @if (!string.IsNullOrEmpty(Model.Notes))
 {
