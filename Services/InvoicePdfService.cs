@@ -7,7 +7,7 @@ namespace TracKeee.Services
 {
     public class InvoicePdfService
     {
-        public byte[] GenerateInvoicePdf(Invoice invoice)
+        public byte[] GenerateInvoicePdf(Invoice invoice, string? paymentUrl = null)
         {
             QuestPDF.Settings.License = LicenseType.Community;
 
@@ -20,7 +20,7 @@ namespace TracKeee.Services
                     page.DefaultTextStyle(x => x.FontSize(10));
 
                     page.Header().Element(c => ComposeHeader(c, invoice));
-                    page.Content().Element(c => ComposeContent(c, invoice));
+                    page.Content().Element(c => ComposeContent(c, invoice, paymentUrl));
                     page.Footer().Element(ComposeFooter);
                 });
             });
@@ -77,7 +77,7 @@ namespace TracKeee.Services
             });
         }
 
-        private void ComposeContent(IContainer container, Invoice invoice)
+        private void ComposeContent(IContainer container, Invoice invoice, string? paymentUrl)
         {
             container.Column(column =>
             {
@@ -157,10 +157,22 @@ namespace TracKeee.Services
                 {
                     banking.Item().Text("Banking Details").Bold().FontColor("#666666");
                     banking.Item().Text("Bank: [Your Bank]");
+                    banking.Item().Text("Bank: [Your Bank]");
                     banking.Item().Text("Account: [Your Account Number]");
                     banking.Item().Text("Branch: [Your Branch Code]");
                     banking.Item().Text($"Reference: {invoice.InvoiceNumber}");
                 });
+
+                // Payment link
+                if (!string.IsNullOrEmpty(paymentUrl) && invoice.Status != InvoiceStatus.Paid)
+                {
+                    column.Item().PaddingTop(20).Background("#e8f5e9").Padding(15).Column(pay =>
+                    {
+                        pay.Item().Text("Pay Online").Bold().FontSize(12).FontColor("#2e7d32");
+                        pay.Item().Text("Click the link below or copy it into your browser to pay this invoice securely via Yoco:");
+                        pay.Item().PaddingTop(5).Hyperlink(paymentUrl).Text(paymentUrl).FontColor("#0d6efd").Underline();
+                    });
+                }
             });
         }
 

@@ -9,6 +9,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlSer
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, TracKeee.Services.BrevoEmailSender>();
 builder.Services.AddTransient<TracKeee.Services.InvoicePdfService>();
+builder.Services.AddHttpClient();
+builder.Services.AddTransient<TracKeee.Services.YocoPaymentService>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

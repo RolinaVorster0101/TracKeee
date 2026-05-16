@@ -104,6 +104,11 @@
     </div>
 }
 
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-info mt-4">@TempData["Message"]</div>
+}
+
 <div class="mt-4">
     @if (Model.Status == TracKeee.Models.InvoiceStatus.Draft)
     {
@@ -113,14 +118,26 @@
     }
     @if (Model.Status == TracKeee.Models.InvoiceStatus.Sent)
     {
+        <button onclick="copyPaymentLink()" class="btn btn-success">Copy Payment Link</button>
         <form asp-action="MarkAsPaid" asp-route-id="@Model.Id" method="post" class="d-inline">
-            <button type="submit" class="btn btn-success">Mark as Paid</button>
+            <button type="submit" class="btn btn-outline-success">Mark as Paid Manually</button>
         </form>
     }
     <a asp-action="DownloadPdf" asp-route-id="@Model.Id" class="btn btn-success">Download PDF</a>
     <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Delete</a>
     <a asp-action="Index" class="btn btn-secondary">Back to List</a>
 </div>
+
+@section Scripts {
+    <script>
+        function copyPaymentLink() {
+            var link = "@($"{Context.Request.Scheme}://{Context.Request.Host}/Invoices/PayInvoice/{Model.Id}")";
+            navigator.clipboard.writeText(link).then(function() {
+                alert("Payment link copied! Share it with your client.");
+            });
+        }
+    </script>
+}
 
 @functions {
     string GetStatusBadgeClass(TracKeee.Models.InvoiceStatus status)

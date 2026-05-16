@@ -14,12 +14,14 @@ namespace TracKeee.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly TracKeee.Services.InvoicePdfService _pdfService;
+        private readonly TracKeee.Services.YocoPaymentService _yocoService;
 
-        public InvoicesController(ApplicationDbContext context, UserManager<IdentityUser> userManager, TracKeee.Services.InvoicePdfService pdfService)
+        public InvoicesController(ApplicationDbContext context, UserManager<IdentityUser> userManager, TracKeee.Services.InvoicePdfService pdfService, TracKeee.Services.YocoPaymentService yocoService)
         {
             _context = context;
             _userManager = userManager;
             _pdfService = pdfService;
+            _yocoService = yocoService;
         }
 
         // GET: Invoices
@@ -226,8 +228,120 @@ namespace TracKeee.Controllers
 
             if (invoice == null) return NotFound();
 
-            var pdfBytes = _pdfService.GenerateInvoicePdf(invoice);
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var paymentUrl = $"{baseUrl}/Invoices/PayInvoice/{invoice.Id}";
+            var pdfBytes = _pdfService.GenerateInvoicePdf(invoice, paymentUrl);
             return File(pdfBytes, "application/pdf", $"{invoice.InvoiceNumber}.pdf");
+        }
+
+        // POST: Invoices/Pay/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Pay(int id)
+        {
+            var userId = _userManager.GetUserId(User);
+            var invoice = await _context.Invoices
+                .Include(i => i.Client)
+                .FirstOrDefaultAsync(i => i.Id == id && i.UserId == userId);
+
+            if (invoice == null) return NotFound();
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var checkout = await _yocoService.CreateCheckout(
+                invoice.Total,
+                invoice.InvoiceNumber,
+                $"{baseUrl}/Invoices/PaymentSuccess?invoiceId={invoice.Id}",
+                $"{baseUrl}/Invoices/PaymentCancel?invoiceId={invoice.Id}",
+                $"{baseUrl}/Invoices/PaymentFailed?invoiceId={invoice.Id}"
+            );
+
+            if (checkout?.RedirectUrl != null)
+            {
+                return Redirect(checkout.RedirectUrl);
+            }
+
+            TempData["Message"] = "Unable to create payment. Please try again later.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        // GET: Invoices/PaymentSuccess
+        [AllowAnonymous]
+        public async Task<IActionResult> PaymentSuccess(int invoiceId)
+        {
+            var invoice = await _context.Invoices
+                .FirstOrDefaultAsync(i => i.Id == invoiceId);
+
+            if (invoice != null)
+            {
+                invoice.Status = InvoiceStatus.Paid;
+                await _context.SaveChangesAsync();
+            }
+
+            return View(invoice);
+        }
+
+        // GET: Invoices/PaymentCancel
+        public async Task<IActionResult> PaymentCancel(int invoiceId)
+        {
+            TempData["Message"] = "Payment was cancelled.";
+            return RedirectToAction(nameof(Details), new { id = invoiceId });
+        }
+
+        // GET: Invoices/PaymentFailed
+        public async Task<IActionResult> PaymentFailed(int invoiceId)
+        {
+            TempData["Message"] = "Payment failed. Please try again.";
+            return RedirectToAction(nameof(Details), new { id = invoiceId });
+        }
+        // GET: Invoices/PayInvoice/5 — PUBLIC page for clients to pay
+        [AllowAnonymous]
+        public async Task<IActionResult> PayInvoice(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var invoice = await _context.Invoices
+                .Include(i => i.Client)
+                .Include(i => i.TimeEntries)
+                    .ThenInclude(t => t.Project)
+                .FirstOrDefaultAsync(i => i.Id == id);
+
+            if (invoice == null) return NotFound();
+            if (invoice.Status == InvoiceStatus.Paid)
+            {
+                TempData["Message"] = "This invoice has already been paid.";
+            }
+
+            return View(invoice);
+        }
+
+        // POST: Invoices/ProcessPayment/5 — PUBLIC payment processing
+        [AllowAnonymous]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ProcessPayment(int id)
+        {
+            var invoice = await _context.Invoices
+                .Include(i => i.Client)
+                .FirstOrDefaultAsync(i => i.Id == id);
+
+            if (invoice == null) return NotFound();
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var checkout = await _yocoService.CreateCheckout(
+                invoice.Total,
+                invoice.InvoiceNumber,
+                $"{baseUrl}/Invoices/PaymentSuccess?invoiceId={invoice.Id}",
+                $"{baseUrl}/Invoices/PayInvoice/{invoice.Id}?cancelled=true",
+                $"{baseUrl}/Invoices/PayInvoice/{invoice.Id}?failed=true"
+            );
+
+            if (checkout?.RedirectUrl != null)
+            {
+                return Redirect(checkout.RedirectUrl);
+            }
+
+            TempData["Message"] = "Unable to create payment. Please try again later.";
+            return RedirectToAction(nameof(PayInvoice), new { id });
         }
     }
 }
