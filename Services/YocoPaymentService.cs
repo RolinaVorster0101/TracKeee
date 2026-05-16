@@ -5,20 +5,17 @@ namespace TracKeee.Services
 {
     public class YocoPaymentService
     {
-        private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<YocoPaymentService> _logger;
 
-        public YocoPaymentService(IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<YocoPaymentService> logger)
+        public YocoPaymentService(IHttpClientFactory httpClientFactory, ILogger<YocoPaymentService> logger)
         {
-            _configuration = configuration;
             _httpClientFactory = httpClientFactory;
             _logger = logger;
         }
 
-        public async Task<YocoCheckoutResponse?> CreateCheckout(decimal amount, string invoiceNumber, string successUrl, string cancelUrl, string failureUrl)
+        public async Task<YocoCheckoutResponse?> CreateCheckout(string secretKey, decimal amount, string invoiceNumber, string successUrl, string cancelUrl, string failureUrl)
         {
-            var secretKey = _configuration["Yoco:SecretKey"];
             var amountInCents = (int)(amount * 100);
 
             var requestBody = new

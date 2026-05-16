@@ -230,7 +230,9 @@ namespace TracKeee.Controllers
 
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
             var paymentUrl = $"{baseUrl}/Invoices/PayInvoice/{invoice.Id}";
-            var pdfBytes = _pdfService.GenerateInvoicePdf(invoice, paymentUrl);
+            var profile = await _context.BusinessProfiles
+    .FirstOrDefaultAsync(p => p.UserId == userId);
+            var pdfBytes = _pdfService.GenerateInvoicePdf(invoice, profile, paymentUrl);
             return File(pdfBytes, "application/pdf", $"{invoice.InvoiceNumber}.pdf");
         }
 
@@ -246,8 +248,18 @@ namespace TracKeee.Controllers
 
             if (invoice == null) return NotFound();
 
+            var profile = await _context.BusinessProfiles
+                .FirstOrDefaultAsync(p => p.UserId == userId);
+
+            if (profile?.YocoSecretKey == null)
+            {
+                TempData["Message"] = "Please add your Yoco secret key in Settings first.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
             var checkout = await _yocoService.CreateCheckout(
+                profile.YocoSecretKey,
                 invoice.Total,
                 invoice.InvoiceNumber,
                 $"{baseUrl}/Invoices/PaymentSuccess?invoiceId={invoice.Id}",
@@ -326,8 +338,19 @@ namespace TracKeee.Controllers
 
             if (invoice == null) return NotFound();
 
+            // Get the freelancer's Yoco key from their Business Profile
+            var profile = await _context.BusinessProfiles
+                .FirstOrDefaultAsync(p => p.UserId == invoice.UserId);
+
+            if (profile?.YocoSecretKey == null)
+            {
+                TempData["Message"] = "Payment is not configured for this invoice. Please contact the sender.";
+                return RedirectToAction(nameof(PayInvoice), new { id });
+            }
+
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
             var checkout = await _yocoService.CreateCheckout(
+                profile.YocoSecretKey,
                 invoice.Total,
                 invoice.InvoiceNumber,
                 $"{baseUrl}/Invoices/PaymentSuccess?invoiceId={invoice.Id}",

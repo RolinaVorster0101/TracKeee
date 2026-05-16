@@ -7,7 +7,7 @@ namespace TracKeee.Services
 {
     public class InvoicePdfService
     {
-        public byte[] GenerateInvoicePdf(Invoice invoice, string? paymentUrl = null)
+        public byte[] GenerateInvoicePdf(Invoice invoice, BusinessProfile? profile = null, string? paymentUrl = null)
         {
             QuestPDF.Settings.License = LicenseType.Community;
 
@@ -19,8 +19,8 @@ namespace TracKeee.Services
                     page.Margin(40);
                     page.DefaultTextStyle(x => x.FontSize(10));
 
-                    page.Header().Element(c => ComposeHeader(c, invoice));
-                    page.Content().Element(c => ComposeContent(c, invoice, paymentUrl));
+                    page.Header().Element(c => ComposeHeader(c, invoice, profile));
+                    page.Content().Element(c => ComposeContent(c, invoice, profile, paymentUrl));
                     page.Footer().Element(ComposeFooter);
                 });
             });
@@ -28,7 +28,7 @@ namespace TracKeee.Services
             return document.GeneratePdf();
         }
 
-        private void ComposeHeader(IContainer container, Invoice invoice)
+        private void ComposeHeader(IContainer container, Invoice invoice, BusinessProfile? profile)
         {
             container.Column(column =>
             {
@@ -42,8 +42,21 @@ namespace TracKeee.Services
 
                     row.RelativeItem().AlignRight().Column(right =>
                     {
-                        right.Item().Text("TracKeee").Bold().FontSize(16).FontColor("#0d6efd");
-                        right.Item().Text("Time Tracking & Invoicing");
+                        if (profile?.LogoData != null)
+                        {
+                            right.Item().AlignRight().Width(120).Image(profile.LogoData);
+                        }
+                        right.Item().AlignRight().Text(profile?.BusinessName ?? "TracKeee").Bold().FontSize(16).FontColor("#0d6efd");
+                        if (!string.IsNullOrEmpty(profile?.ContactName))
+                            right.Item().AlignRight().Text(profile.ContactName);
+                        if (!string.IsNullOrEmpty(profile?.Email))
+                            right.Item().AlignRight().Text(profile.Email);
+                        if (!string.IsNullOrEmpty(profile?.Phone))
+                            right.Item().AlignRight().Text(profile.Phone);
+                        if (!string.IsNullOrEmpty(profile?.Address))
+                            right.Item().AlignRight().Text(profile.Address);
+                        if (!string.IsNullOrEmpty(profile?.VatNumber))
+                            right.Item().AlignRight().Text($"VAT: {profile.VatNumber}");
                     });
                 });
 
@@ -77,7 +90,7 @@ namespace TracKeee.Services
             });
         }
 
-        private void ComposeContent(IContainer container, Invoice invoice, string? paymentUrl)
+        private void ComposeContent(IContainer container, Invoice invoice, BusinessProfile? profile, string? paymentUrl)
         {
             container.Column(column =>
             {
@@ -152,16 +165,31 @@ namespace TracKeee.Services
                     });
                 }
 
-                // Banking details placeholder
-                column.Item().PaddingTop(30).Column(banking =>
+                // Banking details
+                if (profile != null && !string.IsNullOrEmpty(profile.BankName))
                 {
-                    banking.Item().Text("Banking Details").Bold().FontColor("#666666");
-                    banking.Item().Text("Bank: [Your Bank]");
-                    banking.Item().Text("Bank: [Your Bank]");
-                    banking.Item().Text("Account: [Your Account Number]");
-                    banking.Item().Text("Branch: [Your Branch Code]");
-                    banking.Item().Text($"Reference: {invoice.InvoiceNumber}");
-                });
+                    column.Item().PaddingTop(30).Column(banking =>
+                    {
+                        banking.Item().Text("Banking Details").Bold().FontColor("#666666");
+                        banking.Item().Text($"Bank: {profile.BankName}");
+                        if (!string.IsNullOrEmpty(profile.AccountType))
+                            banking.Item().Text($"Account Type: {profile.AccountType}");
+                        banking.Item().Text($"Account: {profile.AccountNumber}");
+                        banking.Item().Text($"Branch: {profile.BranchCode}");
+                        banking.Item().Text($"Reference: {invoice.InvoiceNumber}");
+                    });
+                }
+                else
+                {
+                    column.Item().PaddingTop(30).Column(banking =>
+                    {
+                        banking.Item().Text("Banking Details").Bold().FontColor("#666666");
+                        banking.Item().Text("Bank: [Configure in Settings]");
+                        banking.Item().Text("Account: [Configure in Settings]");
+                        banking.Item().Text("Branch: [Configure in Settings]");
+                        banking.Item().Text($"Reference: {invoice.InvoiceNumber}");
+                    });
+                }
 
                 // Payment link
                 if (!string.IsNullOrEmpty(paymentUrl) && invoice.Status != InvoiceStatus.Paid)
