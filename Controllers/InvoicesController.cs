@@ -13,11 +13,13 @@ namespace TracKeee.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly TracKeee.Services.InvoicePdfService _pdfService;
 
-        public InvoicesController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+        public InvoicesController(ApplicationDbContext context, UserManager<IdentityUser> userManager, TracKeee.Services.InvoicePdfService pdfService)
         {
             _context = context;
             _userManager = userManager;
+            _pdfService = pdfService;
         }
 
         // GET: Invoices
@@ -208,6 +210,24 @@ namespace TracKeee.Controllers
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        // GET: Invoices/DownloadPdf/5
+        public async Task<IActionResult> DownloadPdf(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var userId = _userManager.GetUserId(User);
+            var invoice = await _context.Invoices
+                .Include(i => i.Client)
+                .Include(i => i.TimeEntries)
+                    .ThenInclude(t => t.Project)
+                .FirstOrDefaultAsync(i => i.Id == id && i.UserId == userId);
+
+            if (invoice == null) return NotFound();
+
+            var pdfBytes = _pdfService.GenerateInvoicePdf(invoice);
+            return File(pdfBytes, "application/pdf", $"{invoice.InvoiceNumber}.pdf");
         }
     }
 }

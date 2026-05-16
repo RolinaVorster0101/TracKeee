@@ -117,6 +117,7 @@
             <button type="submit" class="btn btn-success">Mark as Paid</button>
         </form>
     }
+    <a asp-action="DownloadPdf" asp-route-id="@Model.Id" class="btn btn-success">Download PDF</a>
     <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Delete</a>
     <a asp-action="Index" class="btn btn-secondary">Back to List</a>
 </div>
