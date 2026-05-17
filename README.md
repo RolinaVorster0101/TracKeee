@@ -21,6 +21,7 @@ TracKeee is a multi-tenant SaaS platform built for South African freelancers and
 - **Online payments** — integrated Yoco payment gateway — each freelancer connects their own Yoco account, clients pay via a shareable payment link
 - **Dashboard** — real-time overview of clients, projects, hours logged, uninvoiced amounts, and recent activity
 - **Email confirmation** — secure registration with email verification via Brevo SMTP
+- **POPIA compliant** — privacy policy, terms of service, cookie consent, and data protection in line with South African law
 
 ## Why SA-specific?
 
@@ -56,6 +57,7 @@ Multi-tenant — each freelancer or agency gets their own isolated workspace wit
 | Yoco Payments | Per-user payment integration, public payment page for clients |
 | Dashboard | Stats cards, recent activity, quick actions |
 | Auth | Registration with email confirmation, login/logout |
+| Legal & Compliance | POPIA-compliant privacy policy, terms of service, cookie consent |
 
 ## Status
 
