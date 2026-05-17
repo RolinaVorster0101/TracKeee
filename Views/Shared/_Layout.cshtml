@@ -43,29 +43,104 @@
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Settings" asp-action="Index">Settings</a>
                             </li>
                         }
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
                     </ul>
                     <partial name="_LoginPartial" />
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
+    <div class="container flex-grow-1">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <footer class="bg-dark text-light pt-5 pb-3 mt-5">
         <div class="container">
-            &copy; 2026 - TracKeee - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            <div class="row">
+                <div class="col-md-3 mb-4">
+                    <img src="~/images/logo-light.svg" alt="TracKeee" height="45" class="mb-3" />
+                    <p class="text-muted small">Time tracking, invoicing, and client management for South African freelancers and small agencies.</p>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <h6 class="text-uppercase mb-3">Quick Links</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="/" class="text-muted text-decoration-none">Home</a></li>
+                        @if (User.Identity != null && User.Identity.IsAuthenticated)
+                        {
+                            <li class="mb-2"><a asp-controller="Clients" asp-action="Index" class="text-muted text-decoration-none">Clients</a></li>
+                            <li class="mb-2"><a asp-controller="Projects" asp-action="Index" class="text-muted text-decoration-none">Projects</a></li>
+                            <li class="mb-2"><a asp-controller="TimeEntries" asp-action="Index" class="text-muted text-decoration-none">Time Entries</a></li>
+                            <li class="mb-2"><a asp-controller="Invoices" asp-action="Index" class="text-muted text-decoration-none">Invoices</a></li>
+                        }
+                        else
+                        {
+                            <li class="mb-2"><a asp-area="Identity" asp-page="/Account/Register" class="text-muted text-decoration-none">Get Started</a></li>
+                            <li class="mb-2"><a asp-area="Identity" asp-page="/Account/Login" class="text-muted text-decoration-none">Login</a></li>
+                        }
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <h6 class="text-uppercase mb-3">Legal</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a asp-controller="Home" asp-action="Privacy" class="text-muted text-decoration-none">Privacy Policy</a></li>
+                        <li class="mb-2"><a asp-controller="Home" asp-action="Terms" class="text-muted text-decoration-none">Terms of Service</a></li>
+                        <li class="mb-2"><a asp-controller="Home" asp-action="CookiePolicy" class="text-muted text-decoration-none">Cookie Policy</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <h6 class="text-uppercase mb-3">Contact</h6>
+                    <ul class="list-unstyled text-muted small">
+                        <li class="mb-2">Carolina Maria Vorster</li>
+                        <li class="mb-2">Weltevreden Park, Roodepoort</li>
+                        <li class="mb-2">South Africa</li>
+                        <li class="mb-2"><a href="mailto:rolina@rolinavorster.com" class="text-muted text-decoration-none">rolina@rolinavorster.com</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="border-secondary" />
+            <div class="text-center text-muted small">
+                &copy; @DateTime.Now.Year TracKeee. All rights reserved.
+            </div>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- Cookie Consent -->
+    <div id="cookieConsent" class="fixed-bottom text-light p-3" style="display:none; z-index:9999; background-color: #0C447C;">
+        <div class="container d-flex justify-content-between align-items-center flex-wrap">
+            <p class="mb-0 me-3">
+                We use essential cookies to keep you logged in and ensure security.
+                By continuing to use TracKeee, you agree to our
+                <a asp-controller="Home" asp-action="CookiePolicy" class="text-info">Cookie Policy</a>.
+            </p>
+            <div>
+                <button onclick="acceptCookies()" class="btn btn-primary btn-sm me-2">Accept</button>
+                <button onclick="declineCookies()" class="btn btn-outline-light btn-sm">Decline</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            if (!localStorage.getItem('cookieConsent')) {
+                document.getElementById('cookieConsent').style.display = 'block';
+            }
+        })();
+
+        function acceptCookies() {
+            localStorage.setItem('cookieConsent', 'accepted');
+            document.getElementById('cookieConsent').style.display = 'none';
+        }
+
+        function declineCookies() {
+            localStorage.setItem('cookieConsent', 'declined');
+            document.getElementById('cookieConsent').style.display = 'none';
+        }
+    </script>
+
 </body>
 </html>
