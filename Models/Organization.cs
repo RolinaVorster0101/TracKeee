@@ -59,6 +59,7 @@ namespace TracKeee.Models
     {
         Owner,
         Admin,
+        Manager,
         Accountant,
         Employee
     }

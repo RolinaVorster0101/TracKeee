@@ -78,19 +78,55 @@ namespace TracKeee.Services
         {
             return action switch
             {
-                "ViewAllClients" => userRole != OrganizationRole.Employee,
-                "ManageClients" => userRole == OrganizationRole.Owner || userRole == OrganizationRole.Admin,
-                "ViewAllProjects" => userRole != OrganizationRole.Employee,
-                "ManageProjects" => userRole == OrganizationRole.Owner || userRole == OrganizationRole.Admin,
-                "AssignProjects" => userRole == OrganizationRole.Owner || userRole == OrganizationRole.Admin,
-                "ViewAllTimeEntries" => userRole != OrganizationRole.Employee,
+                "ViewAllClients" => userRole == OrganizationRole.Owner
+                    || userRole == OrganizationRole.Admin
+                    || userRole == OrganizationRole.Manager
+                    || userRole == OrganizationRole.Accountant,
+
+                "ManageClients" => userRole == OrganizationRole.Owner
+                    || userRole == OrganizationRole.Admin
+                    || userRole == OrganizationRole.Manager,
+
+                "ViewAllProjects" => userRole == OrganizationRole.Owner
+                    || userRole == OrganizationRole.Admin
+                    || userRole == OrganizationRole.Manager
+                    || userRole == OrganizationRole.Accountant,
+
+                "ManageProjects" => userRole == OrganizationRole.Owner
+                    || userRole == OrganizationRole.Admin
+                    || userRole == OrganizationRole.Manager,
+
+                "AssignProjects" => userRole == OrganizationRole.Owner
+                    || userRole == OrganizationRole.Admin
+                    || userRole == OrganizationRole.Manager,
+
+                "ViewAllTimeEntries" => userRole == OrganizationRole.Owner
+                    || userRole == OrganizationRole.Admin
+                    || userRole == OrganizationRole.Manager
+                    || userRole == OrganizationRole.Accountant,
+
                 "LogTime" => true,
-                "ManageInvoices" => userRole != OrganizationRole.Employee,
-                "ViewFinancials" => userRole != OrganizationRole.Employee,
-                "ManageTeam" => userRole == OrganizationRole.Owner || userRole == OrganizationRole.Admin,
+
+                "ManageInvoices" => userRole == OrganizationRole.Owner
+                    || userRole == OrganizationRole.Admin
+                    || userRole == OrganizationRole.Accountant,
+
+                "ViewFinancials" => userRole == OrganizationRole.Owner
+                    || userRole == OrganizationRole.Admin
+                    || userRole == OrganizationRole.Accountant,
+
+                "ManageTeam" => userRole == OrganizationRole.Owner
+                    || userRole == OrganizationRole.Admin,
+
                 "Delete" => userRole == OrganizationRole.Owner,
+
                 "ManageSettings" => userRole == OrganizationRole.Owner,
-                "ExportData" => userRole != OrganizationRole.Employee,
+
+                "ExportData" => userRole == OrganizationRole.Owner
+                    || userRole == OrganizationRole.Admin
+                    || userRole == OrganizationRole.Manager
+                    || userRole == OrganizationRole.Accountant,
+
                 _ => false
             };
         }

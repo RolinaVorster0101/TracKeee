@@ -28,6 +28,7 @@
                 <label class="control-label">Role</label>
                 <select name="role" class="form-select">
                     <option value="@OrganizationRole.Admin">Admin</option>
+                    <option value="@OrganizationRole.Manager">Manager</option>
                     <option value="@OrganizationRole.Accountant">Accountant</option>
                     <option value="@OrganizationRole.Employee" selected>Employee</option>
                 </select>
@@ -68,6 +69,7 @@
                                     <select name="newRole" class="form-select form-select-sm d-inline-block" style="width: auto;" onchange="this.form.submit()">
                                         <option value="" disabled selected>Change role</option>
                                         <option value="@OrganizationRole.Admin">Admin</option>
+                                        <option value="@OrganizationRole.Manager">Manager</option>
                                         <option value="@OrganizationRole.Accountant">Accountant</option>
                                         <option value="@OrganizationRole.Employee">Employee</option>
                                     </select>
