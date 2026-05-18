@@ -25,39 +25,69 @@ TracKeee is a multi-tenant SaaS platform built for South African freelancers and
 
 ## Why SA-specific?
 
-Most invoicing tools are built for US or EU markets. TracKeee handles South African VAT (15%), ZAR currency, and integrates with Yoco — a payment gateway built for the SA market.
+Most invoicing tools are built for US or EU markets. TracKeee handles South African VAT (15%), ZAR currency, and integrates with Yoco — a payment gateway built for the SA market. Legal pages comply with the Protection of Personal Information Act (POPIA) rather than GDPR, and invoices are formatted for SA business conventions.
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Backend | ASP.NET Core MVC (.NET 8) |
-| Database | Azure SQL Database + Entity Framework Core |
-| Auth | ASP.NET Core Identity (multi-tenant) |
-| Email | Brevo SMTP (transactional emails) |
-| PDF Generation | QuestPDF |
-| Payments | Yoco Checkout API |
-| Hosting | Azure App Service (South Africa North) |
-| Frontend | Razor Views + Bootstrap + JavaScript |
+| Layer | Technology | Why |
+|-------|-----------|-----|
+| Backend | ASP.NET Core MVC (.NET 8) | Industry standard, strongly typed, good tooling |
+| Database | Azure SQL Database + Entity Framework Core | Managed SQL with code-first migrations |
+| Auth | ASP.NET Core Identity | Built-in user management with email confirmation |
+| Email | Brevo SMTP | 300 free transactional emails/day, reliable delivery |
+| PDF Generation | QuestPDF | Clean fluent API, no external dependencies |
+| Payments | Yoco Checkout API | SA-native payment gateway, per-tenant API keys |
+| Hosting | Azure App Service (South Africa North) | Low latency for SA users, free tier available |
+| Frontend | Razor Views + Bootstrap + JavaScript | Server-rendered, minimal client complexity |
 
 ## Architecture
 
-Multi-tenant — each freelancer or agency gets their own isolated workspace with their own clients, projects, time entries, invoices, and business profile. One deployment serves all tenants.
+### Multi-Tenancy
+
+Multi-tenancy is implemented via application-level tenant scoping rather than separate databases or schemas. Every query is filtered by the authenticated user's identifier, enforced at the controller level using ASP.NET Core Identity's `UserManager`, so there is no path for one tenant's data to surface in another's workspace. This approach trades some isolation strictness for operational simplicity — one database, one deployment, straightforward Azure SQL costs at small scale.
+
+### Payment Integration
+
+Payment processing follows a per-tenant integration model. Each freelancer connects their own Yoco account by entering their API key in their Business Profile. When a client pays an invoice, the payment flows directly to the freelancer's Yoco account — TracKeee facilitates the checkout flow but never holds funds. This avoids marketplace payment complexity and regulatory requirements.
+
+### Invoice Generation
+
+Invoices are auto-generated from uninvoiced time entries. The system aggregates all unbilled hours for a selected client, calculates the subtotal based on each project's hourly rate, applies SA VAT at 15%, and produces a PDF with the freelancer's branding, banking details, and a shareable payment link. Time entries are then marked as invoiced and linked to the invoice record, preventing double-billing.
+
+### Email Architecture
+
+Transactional emails (account confirmation, password reset) are sent via Brevo SMTP. The email sender is registered as a dependency-injected service implementing `IEmailSender`, making it swappable for any other provider without changing application code.
 
 ## Features
 
 | Feature | Description |
 |---------|------------|
-| Clients | CRUD with multi-tenant filtering |
+| Clients | CRUD with tenant-scoped filtering |
 | Projects | Linked to clients, hourly rates, status workflow |
 | Time Entries | Log hours, automatic amount calculation, invoiced/pending tracking |
 | Invoices | Auto-generated from time entries, VAT calculation, status workflow (Draft → Sent → Paid) |
 | PDF Invoices | Branded with business profile, banking details, and online payment link |
 | Business Profile | Company name, logo, address, banking details, Yoco API key |
-| Yoco Payments | Per-user payment integration, public payment page for clients |
+| Yoco Payments | Per-tenant payment integration, public payment page for clients |
 | Dashboard | Stats cards, recent activity, quick actions |
 | Auth | Registration with email confirmation, login/logout |
 | Legal & Compliance | POPIA-compliant privacy policy, terms of service, cookie consent |
+
+## Planned Features
+
+| Phase | Feature | Status |
+|-------|---------|--------|
+| 1 | Organization-level tenancy with team members | Planned |
+| 2 | Role-based authorization (Owner, Admin, Accountant, Employee) | Planned |
+| 3 | Security hardening (2FA, rate limiting, audit logging) | Planned |
+| 4 | Live start/stop timer and dashboard charts | Planned |
+| 5 | Search and filtering across all pages | Planned |
+| 6 | Email invoices directly to clients from the app | Planned |
+| 7 | Reporting (monthly revenue, hours by client, profit/loss) | Planned |
+| 8 | Client portal with unique login link | Planned |
+| 9 | CSV/Excel exports and structured logging (Serilog) | Planned |
+| 10 | Activity log and audit trail | Planned |
+| 11 | Custom UI — replacing Bootstrap with hand-crafted CSS | Planned |
 
 ## Status
 
