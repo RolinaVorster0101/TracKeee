@@ -1,0 +1,104 @@
+﻿@model List<TracKeee.ViewModels.TeamMemberViewModel>
+@using TracKeee.Models
+
+@{
+    ViewData["Title"] = "Team Management";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Team — @ViewBag.OrganizationName</h1>
+</div>
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-info">@TempData["Message"]</div>
+}
+
+<!-- Invite Form -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <h5>Invite Team Member</h5>
+        <p class="text-muted">The person must have a registered TracKeee account first.</p>
+        <form asp-action="Invite" method="post" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="control-label">Email Address</label>
+                <input name="email" type="email" class="form-control" placeholder="colleague@example.com" required />
+            </div>
+            <div class="col-md-4">
+                <label class="control-label">Role</label>
+                <select name="role" class="form-select">
+                    <option value="@OrganizationRole.Admin">Admin</option>
+                    <option value="@OrganizationRole.Accountant">Accountant</option>
+                    <option value="@OrganizationRole.Employee" selected>Employee</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">Invite</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Team Members -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Joined</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var member in Model)
+                {
+                    <tr>
+                        <td><strong>@member.Email</strong></td>
+                        <td>
+                            <span class="badge @GetRoleBadge(member.Role)">@member.Role</span>
+                        </td>
+                        <td>@member.JoinedAt.ToString("dd MMM yyyy")</td>
+                        <td class="text-end">
+                            @if (member.Role != OrganizationRole.Owner)
+                            {
+                                <form asp-action="ChangeRole" method="post" class="d-inline">
+                                    <input type="hidden" name="memberId" value="@member.MemberId" />
+                                    <select name="newRole" class="form-select form-select-sm d-inline-block" style="width: auto;" onchange="this.form.submit()">
+                                        <option value="" disabled selected>Change role</option>
+                                        <option value="@OrganizationRole.Admin">Admin</option>
+                                        <option value="@OrganizationRole.Accountant">Accountant</option>
+                                        <option value="@OrganizationRole.Employee">Employee</option>
+                                    </select>
+                                </form>
+                                <form asp-action="RemoveMember" method="post" class="d-inline ms-2">
+                                    <input type="hidden" name="memberId" value="@member.MemberId" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove this team member?')">Remove</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@functions {
+    string GetRoleBadge(OrganizationRole role)
+    {
+        return role switch
+        {
+            OrganizationRole.Owner => "bg-dark",
+            OrganizationRole.Admin => "bg-primary",
+            OrganizationRole.Accountant => "bg-info text-dark",
+            OrganizationRole.Employee => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+}

@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TracKeee.Areas.Identity.Data;
 using TracKeee.Models;
+using TracKeee.Services;
 
 namespace TracKeee.Controllers
 {
@@ -12,60 +12,62 @@ namespace TracKeee.Controllers
     public class InvoicesController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly TracKeee.Services.InvoicePdfService _pdfService;
-        private readonly TracKeee.Services.YocoPaymentService _yocoService;
+        private readonly OrganizationService _orgService;
+        private readonly InvoicePdfService _pdfService;
+        private readonly YocoPaymentService _yocoService;
 
-        public InvoicesController(ApplicationDbContext context, UserManager<IdentityUser> userManager, TracKeee.Services.InvoicePdfService pdfService, TracKeee.Services.YocoPaymentService yocoService)
+        public InvoicesController(ApplicationDbContext context, OrganizationService orgService, InvoicePdfService pdfService, YocoPaymentService yocoService)
         {
             _context = context;
-            _userManager = userManager;
+            _orgService = orgService;
             _pdfService = pdfService;
             _yocoService = yocoService;
         }
 
-        // GET: Invoices
         public async Task<IActionResult> Index()
         {
-            var userId = _userManager.GetUserId(User);
+            var orgId = await _orgService.GetCurrentOrganizationId();
+            var role = await _orgService.GetCurrentRole();
+            if (!_orgService.HasPermission(role, "ManageInvoices"))
+                return Forbid();
+
             var invoices = await _context.Invoices
                 .Include(i => i.Client)
-                .Where(i => i.UserId == userId)
+                .Where(i => i.OrganizationId == orgId)
                 .OrderByDescending(i => i.IssueDate)
                 .ToListAsync();
             return View(invoices);
         }
 
-        // GET: Invoices/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
+            var orgId = await _orgService.GetCurrentOrganizationId();
 
-            var userId = _userManager.GetUserId(User);
             var invoice = await _context.Invoices
                 .Include(i => i.Client)
                 .Include(i => i.TimeEntries)
                     .ThenInclude(t => t.Project)
-                .FirstOrDefaultAsync(i => i.Id == id && i.UserId == userId);
-
+                .FirstOrDefaultAsync(i => i.Id == id && i.OrganizationId == orgId);
             if (invoice == null) return NotFound();
 
             ViewBag.BusinessProfile = await _context.BusinessProfiles
-                .FirstOrDefaultAsync(p => p.UserId == userId);
+                .FirstOrDefaultAsync(p => p.OrganizationId == orgId);
 
             return View(invoice);
         }
 
-        // GET: Invoices/Generate
         public async Task<IActionResult> Generate()
         {
-            var userId = _userManager.GetUserId(User);
+            var orgId = await _orgService.GetCurrentOrganizationId();
+            var role = await _orgService.GetCurrentRole();
+            if (!_orgService.HasPermission(role, "ManageInvoices"))
+                return Forbid();
 
-            // Only show clients that have uninvoiced time entries
             var clientsWithTime = await _context.TimeEntries
                 .Include(t => t.Project)
                     .ThenInclude(p => p!.Client)
-                .Where(t => t.UserId == userId && !t.IsInvoiced)
+                .Where(t => t.OrganizationId == orgId && !t.IsInvoiced)
                 .Select(t => t.Project!.Client)
                 .Distinct()
                 .OrderBy(c => c!.Name)
@@ -81,17 +83,16 @@ namespace TracKeee.Controllers
             return View();
         }
 
-        // POST: Invoices/Generate
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Generate(int ClientId)
         {
-            var userId = _userManager.GetUserId(User);
+            var orgId = await _orgService.GetCurrentOrganizationId();
+            var userId = await _orgService.GetCurrentUserId();
 
-            // Get all uninvoiced time entries for this client
             var timeEntries = await _context.TimeEntries
                 .Include(t => t.Project)
-                .Where(t => t.UserId == userId
+                .Where(t => t.OrganizationId == orgId
                     && !t.IsInvoiced
                     && t.Project!.ClientId == ClientId)
                 .ToListAsync();
@@ -102,19 +103,16 @@ namespace TracKeee.Controllers
                 return RedirectToAction(nameof(Generate));
             }
 
-            // Calculate totals
             var subtotal = timeEntries.Sum(t => t.Hours * (t.Project?.HourlyRate ?? 0));
             var vatRate = 15m;
             var vatAmount = subtotal * vatRate / 100;
             var total = subtotal + vatAmount;
 
-            // Generate invoice number
             var invoiceCount = await _context.Invoices
-                .Where(i => i.UserId == userId)
+                .Where(i => i.OrganizationId == orgId)
                 .CountAsync();
             var invoiceNumber = $"INV-{DateTime.Now:yyyyMM}-{(invoiceCount + 1):D4}";
 
-            // Create invoice
             var invoice = new Invoice
             {
                 InvoiceNumber = invoiceNumber,
@@ -126,14 +124,14 @@ namespace TracKeee.Controllers
                 VatAmount = vatAmount,
                 Total = total,
                 Status = InvoiceStatus.Draft,
-                UserId = userId!,
+                OrganizationId = orgId,
+                UserId = userId,
                 CreatedAt = DateTime.UtcNow
             };
 
             _context.Invoices.Add(invoice);
             await _context.SaveChangesAsync();
 
-            // Link time entries to invoice and mark as invoiced
             foreach (var entry in timeEntries)
             {
                 entry.InvoiceId = invoice.Id;
@@ -144,116 +142,107 @@ namespace TracKeee.Controllers
             return RedirectToAction(nameof(Details), new { id = invoice.Id });
         }
 
-        // POST: Invoices/MarkAsSent/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkAsSent(int id)
         {
-            var userId = _userManager.GetUserId(User);
+            var orgId = await _orgService.GetCurrentOrganizationId();
             var invoice = await _context.Invoices
-                .FirstOrDefaultAsync(i => i.Id == id && i.UserId == userId);
-
+                .FirstOrDefaultAsync(i => i.Id == id && i.OrganizationId == orgId);
             if (invoice == null) return NotFound();
 
             invoice.Status = InvoiceStatus.Sent;
             await _context.SaveChangesAsync();
-
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // POST: Invoices/MarkAsPaid/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkAsPaid(int id)
         {
-            var userId = _userManager.GetUserId(User);
+            var orgId = await _orgService.GetCurrentOrganizationId();
             var invoice = await _context.Invoices
-                .FirstOrDefaultAsync(i => i.Id == id && i.UserId == userId);
-
+                .FirstOrDefaultAsync(i => i.Id == id && i.OrganizationId == orgId);
             if (invoice == null) return NotFound();
 
             invoice.Status = InvoiceStatus.Paid;
             await _context.SaveChangesAsync();
-
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // GET: Invoices/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
+            var role = await _orgService.GetCurrentRole();
+            if (!_orgService.HasPermission(role, "Delete"))
+                return Forbid();
 
-            var userId = _userManager.GetUserId(User);
+            var orgId = await _orgService.GetCurrentOrganizationId();
             var invoice = await _context.Invoices
                 .Include(i => i.Client)
-                .FirstOrDefaultAsync(i => i.Id == id && i.UserId == userId);
-
+                .FirstOrDefaultAsync(i => i.Id == id && i.OrganizationId == orgId);
             if (invoice == null) return NotFound();
             return View(invoice);
         }
 
-        // POST: Invoices/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var userId = _userManager.GetUserId(User);
+            var role = await _orgService.GetCurrentRole();
+            if (!_orgService.HasPermission(role, "Delete"))
+                return Forbid();
+
+            var orgId = await _orgService.GetCurrentOrganizationId();
             var invoice = await _context.Invoices
                 .Include(i => i.TimeEntries)
-                .FirstOrDefaultAsync(i => i.Id == id && i.UserId == userId);
+                .FirstOrDefaultAsync(i => i.Id == id && i.OrganizationId == orgId);
 
             if (invoice != null)
             {
-                // Unlink time entries and mark as uninvoiced
                 foreach (var entry in invoice.TimeEntries)
                 {
                     entry.InvoiceId = null;
                     entry.IsInvoiced = false;
                 }
-
                 _context.Invoices.Remove(invoice);
                 await _context.SaveChangesAsync();
             }
-
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Invoices/DownloadPdf/5
         public async Task<IActionResult> DownloadPdf(int? id)
         {
             if (id == null) return NotFound();
+            var orgId = await _orgService.GetCurrentOrganizationId();
 
-            var userId = _userManager.GetUserId(User);
             var invoice = await _context.Invoices
                 .Include(i => i.Client)
                 .Include(i => i.TimeEntries)
                     .ThenInclude(t => t.Project)
-                .FirstOrDefaultAsync(i => i.Id == id && i.UserId == userId);
-
+                .FirstOrDefaultAsync(i => i.Id == id && i.OrganizationId == orgId);
             if (invoice == null) return NotFound();
 
+            var profile = await _context.BusinessProfiles
+                .FirstOrDefaultAsync(p => p.OrganizationId == orgId);
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
             var paymentUrl = $"{baseUrl}/Invoices/PayInvoice/{invoice.Id}";
-            var profile = await _context.BusinessProfiles
-    .FirstOrDefaultAsync(p => p.UserId == userId);
             var pdfBytes = _pdfService.GenerateInvoicePdf(invoice, profile, paymentUrl);
             return File(pdfBytes, "application/pdf", $"{invoice.InvoiceNumber}.pdf");
         }
 
-        // POST: Invoices/Pay/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Pay(int id)
         {
-            var userId = _userManager.GetUserId(User);
+            var orgId = await _orgService.GetCurrentOrganizationId();
             var invoice = await _context.Invoices
                 .Include(i => i.Client)
-                .FirstOrDefaultAsync(i => i.Id == id && i.UserId == userId);
-
+                .FirstOrDefaultAsync(i => i.Id == id && i.OrganizationId == orgId);
             if (invoice == null) return NotFound();
 
             var profile = await _context.BusinessProfiles
-                .FirstOrDefaultAsync(p => p.UserId == userId);
+                .FirstOrDefaultAsync(p => p.OrganizationId == orgId);
 
             if (profile?.YocoSecretKey == null)
             {
@@ -272,15 +261,12 @@ namespace TracKeee.Controllers
             );
 
             if (checkout?.RedirectUrl != null)
-            {
                 return Redirect(checkout.RedirectUrl);
-            }
 
             TempData["Message"] = "Unable to create payment. Please try again later.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // GET: Invoices/PaymentSuccess
         [AllowAnonymous]
         public async Task<IActionResult> PaymentSuccess(int invoiceId)
         {
@@ -292,24 +278,23 @@ namespace TracKeee.Controllers
                 invoice.Status = InvoiceStatus.Paid;
                 await _context.SaveChangesAsync();
             }
-
             return View(invoice);
         }
 
-        // GET: Invoices/PaymentCancel
+        [AllowAnonymous]
         public async Task<IActionResult> PaymentCancel(int invoiceId)
         {
             TempData["Message"] = "Payment was cancelled.";
-            return RedirectToAction(nameof(Details), new { id = invoiceId });
+            return RedirectToAction(nameof(PayInvoice), new { id = invoiceId });
         }
 
-        // GET: Invoices/PaymentFailed
+        [AllowAnonymous]
         public async Task<IActionResult> PaymentFailed(int invoiceId)
         {
             TempData["Message"] = "Payment failed. Please try again.";
-            return RedirectToAction(nameof(Details), new { id = invoiceId });
+            return RedirectToAction(nameof(PayInvoice), new { id = invoiceId });
         }
-        // GET: Invoices/PayInvoice/5 — PUBLIC page for clients to pay
+
         [AllowAnonymous]
         public async Task<IActionResult> PayInvoice(int? id)
         {
@@ -320,20 +305,17 @@ namespace TracKeee.Controllers
                 .Include(i => i.TimeEntries)
                     .ThenInclude(t => t.Project)
                 .FirstOrDefaultAsync(i => i.Id == id);
-
             if (invoice == null) return NotFound();
+
             if (invoice.Status == InvoiceStatus.Paid)
-            {
                 TempData["Message"] = "This invoice has already been paid.";
-            }
 
             ViewBag.BusinessProfile = await _context.BusinessProfiles
-                .FirstOrDefaultAsync(p => p.UserId == invoice.UserId);
+                .FirstOrDefaultAsync(p => p.OrganizationId == invoice.OrganizationId);
 
             return View(invoice);
         }
 
-        // POST: Invoices/ProcessPayment/5 — PUBLIC payment processing
         [AllowAnonymous]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -342,12 +324,10 @@ namespace TracKeee.Controllers
             var invoice = await _context.Invoices
                 .Include(i => i.Client)
                 .FirstOrDefaultAsync(i => i.Id == id);
-
             if (invoice == null) return NotFound();
 
-            // Get the freelancer's Yoco key from their Business Profile
             var profile = await _context.BusinessProfiles
-                .FirstOrDefaultAsync(p => p.UserId == invoice.UserId);
+                .FirstOrDefaultAsync(p => p.OrganizationId == invoice.OrganizationId);
 
             if (profile?.YocoSecretKey == null)
             {
@@ -366,9 +346,7 @@ namespace TracKeee.Controllers
             );
 
             if (checkout?.RedirectUrl != null)
-            {
                 return Redirect(checkout.RedirectUrl);
-            }
 
             TempData["Message"] = "Unable to create payment. Please try again later.";
             return RedirectToAction(nameof(PayInvoice), new { id });
@@ -377,13 +355,16 @@ namespace TracKeee.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> BusinessLogo(string userId)
         {
+            // Find org by any member's userId
+            var member = await _context.OrganizationMembers
+                .FirstOrDefaultAsync(m => m.UserId == userId);
+            if (member == null) return NotFound();
+
             var profile = await _context.BusinessProfiles
-                .FirstOrDefaultAsync(p => p.UserId == userId);
+                .FirstOrDefaultAsync(p => p.OrganizationId == member.OrganizationId);
 
             if (profile?.LogoData != null && profile.LogoContentType != null)
-            {
                 return File(profile.LogoData, profile.LogoContentType);
-            }
 
             return NotFound();
         }

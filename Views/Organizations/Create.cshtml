@@ -1,0 +1,55 @@
+﻿@{
+    ViewData["Title"] = "Get Started";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <img src="~/images/logo.svg" alt="TracKeee" height="50" class="mb-3" />
+                    <h2>Welcome to TracKeee!</h2>
+                </div>
+                @{
+                    var showInviteTab = TempData["InviteMessage"] != null;
+                }
+
+                <ul class="nav nav-tabs mb-4" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link @(showInviteTab ? "" : "active")" data-bs-toggle="tab" data-bs-target="#createTab">Create Organization</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link @(showInviteTab ? "active" : "")" data-bs-toggle="tab" data-bs-target="#invitedTab">I've Been Invited</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <div class="tab-pane fade @(showInviteTab ? "" : "show active")" id="createTab">
+                        <p class="text-muted">Create your organization to get started. This is your workspace where you'll manage clients, projects, and invoices.</p>
+                        <form asp-action="Create" method="post">
+                            <div asp-validation-summary="All" class="text-danger"></div>
+                            <div class="form-group mb-3">
+                                <label class="control-label">Organization / Company Name</label>
+                                <input name="organizationName" class="form-control" placeholder="e.g. Vorster Design Studio" required />
+                                <small class="text-muted">Your company name, agency name, or your own name if you're a freelancer.</small>
+                            </div>
+                            <div class="form-group mt-4">
+                                <button type="submit" class="btn btn-primary w-100">Create Organization</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="tab-pane fade @(showInviteTab ? "show active" : "")" id="invitedTab">
+                        @if (TempData["InviteMessage"] != null)
+                        {
+                            <div class="alert alert-warning">@TempData["InviteMessage"]</div>
+                        }
+                        <p class="text-muted">If your team admin has already invited you, click below to check. Make sure they've added you using your registered email address.</p>
+                        <a asp-action="CheckInvite" class="btn btn-primary w-100">Check for Invite</a>
+                        <p class="text-muted mt-3 small">If you haven't been invited yet, ask your team admin to go to <strong>Team</strong> in their TracKeee account and add your email address.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

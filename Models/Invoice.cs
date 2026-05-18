@@ -55,6 +55,10 @@ namespace TracKeee.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [Required]
+        public int OrganizationId { get; set; }
+        public Organization? Organization { get; set; }
+
+        [Required]
         public string UserId { get; set; } = string.Empty;
 
         // Navigation - time entries linked to this invoice

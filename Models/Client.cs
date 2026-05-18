@@ -36,8 +36,9 @@ namespace TracKeee.Models
         [Display(Name = "Created")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        // Multi-tenant - which user owns this client
+        // Multi-tenant - which organization owns this client
         [Required]
-        public string UserId { get; set; } = string.Empty;
+        public int OrganizationId { get; set; }
+        public Organization? Organization { get; set; }
     }
 }

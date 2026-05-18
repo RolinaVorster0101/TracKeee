@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TracKeee.Areas.Identity.Data;
 using TracKeee.Models;
+using TracKeee.Services;
 
 namespace TracKeee.Controllers
 {
@@ -12,58 +12,80 @@ namespace TracKeee.Controllers
     public class ProjectsController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly OrganizationService _orgService;
 
-        public ProjectsController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+        public ProjectsController(ApplicationDbContext context, OrganizationService orgService)
         {
             _context = context;
-            _userManager = userManager;
+            _orgService = orgService;
         }
 
-        // GET: Projects
         public async Task<IActionResult> Index()
         {
-            var userId = _userManager.GetUserId(User);
-            var projects = await _context.Projects
-                .Include(p => p.Client)
-                .Where(p => p.UserId == userId)
-                .OrderBy(p => p.Name)
-                .ToListAsync();
+            var orgId = await _orgService.GetCurrentOrganizationId();
+            var role = await _orgService.GetCurrentRole();
+            var userId = await _orgService.GetCurrentUserId();
+
+            List<Project> projects;
+
+            if (_orgService.HasPermission(role, "ViewAllProjects"))
+            {
+                projects = await _context.Projects
+                    .Include(p => p.Client)
+                    .Where(p => p.OrganizationId == orgId)
+                    .OrderBy(p => p.Name)
+                    .ToListAsync();
+            }
+            else
+            {
+                // Employee — only assigned projects
+                projects = await _context.Projects
+                    .Include(p => p.Client)
+                    .Where(p => p.OrganizationId == orgId
+                        && _context.ProjectAssignments.Any(a => a.ProjectId == p.Id && a.UserId == userId))
+                    .OrderBy(p => p.Name)
+                    .ToListAsync();
+            }
+
             return View(projects);
         }
 
-        // GET: Projects/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
+            var orgId = await _orgService.GetCurrentOrganizationId();
 
-            var userId = _userManager.GetUserId(User);
             var project = await _context.Projects
                 .Include(p => p.Client)
-                .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
-
+                .FirstOrDefaultAsync(m => m.Id == id && m.OrganizationId == orgId);
             if (project == null) return NotFound();
             return View(project);
         }
 
-        // GET: Projects/Create
         public async Task<IActionResult> Create()
         {
+            var role = await _orgService.GetCurrentRole();
+            if (!_orgService.HasPermission(role, "ManageProjects"))
+                return Forbid();
             await PopulateClientsDropdown();
             return View();
         }
 
-        // POST: Projects/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Name,Description,ClientId,HourlyRate,Status,StartDate,DueDate")] Project project)
         {
-            ModelState.Remove("UserId");
+            ModelState.Remove("OrganizationId");
+            ModelState.Remove("Organization");
             ModelState.Remove("Client");
+
+            var role = await _orgService.GetCurrentRole();
+            if (!_orgService.HasPermission(role, "ManageProjects"))
+                return Forbid();
 
             if (ModelState.IsValid)
             {
-                project.UserId = _userManager.GetUserId(User)!;
+                project.OrganizationId = await _orgService.GetCurrentOrganizationId();
                 project.CreatedAt = DateTime.UtcNow;
                 _context.Add(project);
                 await _context.SaveChangesAsync();
@@ -73,104 +95,96 @@ namespace TracKeee.Controllers
             return View(project);
         }
 
-        // GET: Projects/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
+            var role = await _orgService.GetCurrentRole();
+            if (!_orgService.HasPermission(role, "ManageProjects"))
+                return Forbid();
 
-            var userId = _userManager.GetUserId(User);
+            var orgId = await _orgService.GetCurrentOrganizationId();
             var project = await _context.Projects
-                .FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
-
+                .FirstOrDefaultAsync(p => p.Id == id && p.OrganizationId == orgId);
             if (project == null) return NotFound();
             await PopulateClientsDropdown(project.ClientId);
             return View(project);
         }
 
-        // POST: Projects/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description,ClientId,HourlyRate,Status,StartDate,DueDate")] Project project)
         {
             if (id != project.Id) return NotFound();
 
-            ModelState.Remove("UserId");
+            ModelState.Remove("OrganizationId");
+            ModelState.Remove("Organization");
             ModelState.Remove("Client");
 
-            var userId = _userManager.GetUserId(User);
-            var existing = await _context.Projects
-                .FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
+            var role = await _orgService.GetCurrentRole();
+            if (!_orgService.HasPermission(role, "ManageProjects"))
+                return Forbid();
 
+            var orgId = await _orgService.GetCurrentOrganizationId();
+            var existing = await _context.Projects
+                .FirstOrDefaultAsync(p => p.Id == id && p.OrganizationId == orgId);
             if (existing == null) return NotFound();
 
             if (ModelState.IsValid)
             {
-                try
-                {
-                    existing.Name = project.Name;
-                    existing.Description = project.Description;
-                    existing.ClientId = project.ClientId;
-                    existing.HourlyRate = project.HourlyRate;
-                    existing.Status = project.Status;
-                    existing.StartDate = project.StartDate;
-                    existing.DueDate = project.DueDate;
-
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ProjectExists(project.Id)) return NotFound();
-                    else throw;
-                }
+                existing.Name = project.Name;
+                existing.Description = project.Description;
+                existing.ClientId = project.ClientId;
+                existing.HourlyRate = project.HourlyRate;
+                existing.Status = project.Status;
+                existing.StartDate = project.StartDate;
+                existing.DueDate = project.DueDate;
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             await PopulateClientsDropdown(project.ClientId);
             return View(project);
         }
 
-        // GET: Projects/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
+            var role = await _orgService.GetCurrentRole();
+            if (!_orgService.HasPermission(role, "Delete"))
+                return Forbid();
 
-            var userId = _userManager.GetUserId(User);
+            var orgId = await _orgService.GetCurrentOrganizationId();
             var project = await _context.Projects
                 .Include(p => p.Client)
-                .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
-
+                .FirstOrDefaultAsync(m => m.Id == id && m.OrganizationId == orgId);
             if (project == null) return NotFound();
             return View(project);
         }
 
-        // POST: Projects/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var userId = _userManager.GetUserId(User);
+            var role = await _orgService.GetCurrentRole();
+            if (!_orgService.HasPermission(role, "Delete"))
+                return Forbid();
+
+            var orgId = await _orgService.GetCurrentOrganizationId();
             var project = await _context.Projects
-                .FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
+                .FirstOrDefaultAsync(p => p.Id == id && p.OrganizationId == orgId);
 
             if (project != null)
             {
                 _context.Projects.Remove(project);
                 await _context.SaveChangesAsync();
             }
-
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool ProjectExists(int id)
-        {
-            var userId = _userManager.GetUserId(User);
-            return _context.Projects.Any(e => e.Id == id && e.UserId == userId);
         }
 
         private async Task PopulateClientsDropdown(int? selectedClientId = null)
         {
-            var userId = _userManager.GetUserId(User);
+            var orgId = await _orgService.GetCurrentOrganizationId();
             var clients = await _context.Clients
-                .Where(c => c.UserId == userId)
+                .Where(c => c.OrganizationId == orgId)
                 .OrderBy(c => c.Name)
                 .ToListAsync();
             ViewBag.ClientId = new SelectList(clients, "Id", "Name", selectedClientId);

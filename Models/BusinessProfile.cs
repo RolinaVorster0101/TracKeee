@@ -63,6 +63,7 @@ namespace TracKeee.Models
         public string? YocoSecretKey { get; set; }
 
         [Required]
-        public string UserId { get; set; } = string.Empty;
+        public int OrganizationId { get; set; }
+        public Organization? Organization { get; set; }
     }
 }

@@ -11,6 +11,8 @@ builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSe
 builder.Services.AddTransient<TracKeee.Services.InvoicePdfService>();
 builder.Services.AddHttpClient();
 builder.Services.AddTransient<TracKeee.Services.YocoPaymentService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<TracKeee.Services.OrganizationService>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

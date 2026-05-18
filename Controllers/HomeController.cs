@@ -1,9 +1,9 @@
 using System.Diagnostics;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TracKeee.Areas.Identity.Data;
 using TracKeee.Models;
+using TracKeee.Services;
 
 namespace TracKeee.Controllers;
 
@@ -11,73 +11,111 @@ public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
     private readonly ApplicationDbContext _context;
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly OrganizationService _orgService;
 
-    public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, UserManager<IdentityUser> userManager)
+    public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, OrganizationService orgService)
     {
         _logger = logger;
         _context = context;
-        _userManager = userManager;
+        _orgService = orgService;
     }
 
     public async Task<IActionResult> Index()
     {
         if (User.Identity != null && User.Identity.IsAuthenticated)
         {
-            var userId = _userManager.GetUserId(User);
+            try
+            {
+                var orgId = await _orgService.GetCurrentOrganizationId();
+                var role = await _orgService.GetCurrentRole();
+                var userId = await _orgService.GetCurrentUserId();
 
-            ViewBag.TotalClients = await _context.Clients
-                .CountAsync(c => c.UserId == userId);
+                ViewBag.TotalClients = await _context.Clients
+                    .CountAsync(c => c.OrganizationId == orgId);
 
-            ViewBag.ActiveProjects = await _context.Projects
-                .CountAsync(p => p.UserId == userId && p.Status == ProjectStatus.Active);
+                ViewBag.ActiveProjects = await _context.Projects
+                    .CountAsync(p => p.OrganizationId == orgId && p.Status == ProjectStatus.Active);
 
-            ViewBag.TotalProjects = await _context.Projects
-                .CountAsync(p => p.UserId == userId);
+                ViewBag.TotalProjects = await _context.Projects
+                    .CountAsync(p => p.OrganizationId == orgId);
 
-            var thisMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                var thisMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
 
-            ViewBag.HoursThisMonth = await _context.TimeEntries
-                .Where(t => t.UserId == userId && t.Date >= thisMonth)
-                .SumAsync(t => t.Hours);
+                if (_orgService.HasPermission(role, "ViewAllTimeEntries"))
+                {
+                    ViewBag.HoursThisMonth = await _context.TimeEntries
+                        .Where(t => t.OrganizationId == orgId && t.Date >= thisMonth)
+                        .SumAsync(t => t.Hours);
 
-            ViewBag.TotalHours = await _context.TimeEntries
-                .Where(t => t.UserId == userId)
-                .SumAsync(t => t.Hours);
+                    ViewBag.TotalHours = await _context.TimeEntries
+                        .Where(t => t.OrganizationId == orgId)
+                        .SumAsync(t => t.Hours);
+                }
+                else
+                {
+                    ViewBag.HoursThisMonth = await _context.TimeEntries
+                        .Where(t => t.OrganizationId == orgId && t.UserId == userId && t.Date >= thisMonth)
+                        .SumAsync(t => t.Hours);
 
-            ViewBag.UninvoicedAmount = await _context.TimeEntries
-                .Include(t => t.Project)
-                .Where(t => t.UserId == userId && !t.IsInvoiced)
-                .SumAsync(t => t.Hours * (t.Project!.HourlyRate));
+                    ViewBag.TotalHours = await _context.TimeEntries
+                        .Where(t => t.OrganizationId == orgId && t.UserId == userId)
+                        .SumAsync(t => t.Hours);
+                }
 
-            ViewBag.UnpaidInvoices = await _context.Invoices
-                .Where(i => i.UserId == userId && i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled)
-                .SumAsync(i => i.Total);
+                ViewBag.UninvoicedAmount = await _context.TimeEntries
+                    .Include(t => t.Project)
+                    .Where(t => t.OrganizationId == orgId && !t.IsInvoiced)
+                    .SumAsync(t => t.Hours * (t.Project!.HourlyRate));
 
-            ViewBag.TotalInvoices = await _context.Invoices
-                .CountAsync(i => i.UserId == userId);
+                ViewBag.UnpaidInvoices = await _context.Invoices
+                    .Where(i => i.OrganizationId == orgId && i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled)
+                    .SumAsync(i => i.Total);
 
-            ViewBag.RecentProjects = await _context.Projects
-                            .Include(p => p.Client)
-                            .Where(p => p.UserId == userId)
-                            .OrderByDescending(p => p.CreatedAt)
-                            .Take(5)
-                            .ToListAsync();
+                ViewBag.TotalInvoices = await _context.Invoices
+                    .CountAsync(i => i.OrganizationId == orgId);
 
-            ViewBag.RecentTimeEntries = await _context.TimeEntries
-                .Include(t => t.Project)
-                    .ThenInclude(p => p!.Client)
-                .Where(t => t.UserId == userId)
-                .OrderByDescending(t => t.Date)
-                .Take(5)
-                .ToListAsync();
+                ViewBag.RecentProjects = await _context.Projects
+                    .Include(p => p.Client)
+                    .Where(p => p.OrganizationId == orgId)
+                    .OrderByDescending(p => p.CreatedAt)
+                    .Take(5)
+                    .ToListAsync();
 
-            ViewBag.RecentInvoices = await _context.Invoices
-                .Include(i => i.Client)
-                .Where(i => i.UserId == userId)
-                .OrderByDescending(i => i.IssueDate)
-                .Take(5)
-                .ToListAsync();
+                if (_orgService.HasPermission(role, "ViewAllTimeEntries"))
+                {
+                    ViewBag.RecentTimeEntries = await _context.TimeEntries
+                        .Include(t => t.Project)
+                            .ThenInclude(p => p!.Client)
+                        .Where(t => t.OrganizationId == orgId)
+                        .OrderByDescending(t => t.Date)
+                        .Take(5)
+                        .ToListAsync();
+                }
+                else
+                {
+                    ViewBag.RecentTimeEntries = await _context.TimeEntries
+                        .Include(t => t.Project)
+                            .ThenInclude(p => p!.Client)
+                        .Where(t => t.OrganizationId == orgId && t.UserId == userId)
+                        .OrderByDescending(t => t.Date)
+                        .Take(5)
+                        .ToListAsync();
+                }
+
+                ViewBag.RecentInvoices = await _context.Invoices
+                    .Include(i => i.Client)
+                    .Where(i => i.OrganizationId == orgId)
+                    .OrderByDescending(i => i.IssueDate)
+                    .Take(5)
+                    .ToListAsync();
+
+                ViewBag.UserRole = role;
+            }
+            catch (InvalidOperationException)
+            {
+                // User has no organization yet — redirect to create one
+                return RedirectToAction("Create", "Organizations");
+            }
         }
 
         return View();
@@ -88,12 +126,6 @@ public class HomeController : Controller
         return View();
     }
 
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
-    {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-    }
-
     public IActionResult Terms()
     {
         return View();
@@ -102,5 +134,11 @@ public class HomeController : Controller
     public IActionResult CookiePolicy()
     {
         return View();
+    }
+
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
+    {
+        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }

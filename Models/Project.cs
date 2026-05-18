@@ -43,7 +43,8 @@ namespace TracKeee.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [Required]
-        public string UserId { get; set; } = string.Empty;
+        public int OrganizationId { get; set; }
+        public Organization? Organization { get; set; }
     }
 
     public enum ProjectStatus

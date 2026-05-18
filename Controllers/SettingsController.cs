@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TracKeee.Areas.Identity.Data;
 using TracKeee.Models;
+using TracKeee.Services;
 
 namespace TracKeee.Controllers
 {
@@ -11,45 +11,52 @@ namespace TracKeee.Controllers
     public class SettingsController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly OrganizationService _orgService;
 
-        public SettingsController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+        public SettingsController(ApplicationDbContext context, OrganizationService orgService)
         {
             _context = context;
-            _userManager = userManager;
+            _orgService = orgService;
         }
 
-        // GET: Settings
         public async Task<IActionResult> Index()
         {
-            var userId = _userManager.GetUserId(User);
+            var role = await _orgService.GetCurrentRole();
+            if (!_orgService.HasPermission(role, "ManageSettings"))
+                return Forbid();
+
+            var orgId = await _orgService.GetCurrentOrganizationId();
             var profile = await _context.BusinessProfiles
-                .FirstOrDefaultAsync(p => p.UserId == userId);
+                .FirstOrDefaultAsync(p => p.OrganizationId == orgId);
 
             if (profile == null)
             {
-                profile = new BusinessProfile { UserId = userId! };
+                profile = new BusinessProfile { OrganizationId = orgId };
             }
 
             return View(profile);
         }
 
-        // POST: Settings
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Index([Bind("Id,BusinessName,ContactName,Email,Phone,Address,VatNumber,BankName,AccountNumber,BranchCode,AccountType,YocoSecretKey")] BusinessProfile profile, IFormFile? logo)
         {
-            ModelState.Remove("UserId");
+            ModelState.Remove("OrganizationId");
+            ModelState.Remove("Organization");
 
-            var userId = _userManager.GetUserId(User);
+            var role = await _orgService.GetCurrentRole();
+            if (!_orgService.HasPermission(role, "ManageSettings"))
+                return Forbid();
+
+            var orgId = await _orgService.GetCurrentOrganizationId();
             var existing = await _context.BusinessProfiles
-                .FirstOrDefaultAsync(p => p.UserId == userId);
+                .FirstOrDefaultAsync(p => p.OrganizationId == orgId);
 
             if (ModelState.IsValid)
             {
                 if (existing == null)
                 {
-                    profile.UserId = userId!;
+                    profile.OrganizationId = orgId;
 
                     if (logo != null && logo.Length > 0)
                     {
@@ -73,6 +80,7 @@ namespace TracKeee.Controllers
                     existing.AccountNumber = profile.AccountNumber;
                     existing.BranchCode = profile.BranchCode;
                     existing.AccountType = profile.AccountType;
+
                     if (!string.IsNullOrEmpty(profile.YocoSecretKey))
                         existing.YocoSecretKey = profile.YocoSecretKey;
 
@@ -93,29 +101,29 @@ namespace TracKeee.Controllers
             return View(profile);
         }
 
-        // GET: Settings/Logo
         public async Task<IActionResult> Logo()
         {
-            var userId = _userManager.GetUserId(User);
+            var orgId = await _orgService.GetCurrentOrganizationId();
             var profile = await _context.BusinessProfiles
-                .FirstOrDefaultAsync(p => p.UserId == userId);
+                .FirstOrDefaultAsync(p => p.OrganizationId == orgId);
 
             if (profile?.LogoData != null && profile.LogoContentType != null)
-            {
                 return File(profile.LogoData, profile.LogoContentType);
-            }
 
             return NotFound();
         }
 
-        // POST: Settings/RemoveLogo
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveLogo()
         {
-            var userId = _userManager.GetUserId(User);
+            var role = await _orgService.GetCurrentRole();
+            if (!_orgService.HasPermission(role, "ManageSettings"))
+                return Forbid();
+
+            var orgId = await _orgService.GetCurrentOrganizationId();
             var profile = await _context.BusinessProfiles
-                .FirstOrDefaultAsync(p => p.UserId == userId);
+                .FirstOrDefaultAsync(p => p.OrganizationId == orgId);
 
             if (profile != null)
             {
