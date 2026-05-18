@@ -6,14 +6,29 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Projects</h1>
-    <a asp-action="Create" class="btn btn-primary">+ Add Project</a>
+    @{
+        var projectRole = await OrgService.GetCurrentRole();
+    }
+    @if (OrgService.HasPermission(projectRole, "ManageProjects"))
+    {
+        <a asp-action="Create" class="btn btn-primary">+ Add Project</a>
+    }
 </div>
 
 @if (!Model.Any())
 {
-    <div class="alert alert-info">
-        You don't have any projects yet. <a asp-action="Create">Add your first project</a> to get started.
-    </div>
+    @if (OrgService.HasPermission(projectRole, "ManageProjects"))
+    {
+        <div class="alert alert-info">
+            You don't have any projects yet. <a asp-action="Create">Add your first project</a> to get started.
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            No projects assigned to you yet. Your team admin will assign you to projects.
+        </div>
+    }
 }
 else
 {
@@ -23,7 +38,10 @@ else
                 <tr>
                     <th>@Html.DisplayNameFor(model => model.Name)</th>
                     <th>@Html.DisplayNameFor(model => model.Client)</th>
-                    <th>@Html.DisplayNameFor(model => model.HourlyRate)</th>
+                    @if (OrgService.HasPermission(projectRole, "ViewFinancials"))
+                    {
+                        <th>@Html.DisplayNameFor(model => model.HourlyRate)</th>
+                    }
                     <th>@Html.DisplayNameFor(model => model.Status)</th>
                     <th>@Html.DisplayNameFor(model => model.DueDate)</th>
                     <th class="text-end">Actions</th>
@@ -35,7 +53,10 @@ else
                     <tr>
                         <td><strong>@Html.DisplayFor(modelItem => item.Name)</strong></td>
                         <td>@Html.DisplayFor(modelItem => item.Client!.Name)</td>
-                        <td>R @item.HourlyRate.ToString("N2")</td>
+                        @if (OrgService.HasPermission(projectRole, "ViewFinancials"))
+                        {
+                            <td>R @item.HourlyRate.ToString("N2")</td>
+                        }
                         <td>
                             <span class="badge @GetStatusBadgeClass(item.Status)">
                                 @item.Status
@@ -44,8 +65,14 @@ else
                         <td>@(item.DueDate?.ToString("dd MMM yyyy") ?? "-")</td>
                         <td class="text-end">
                             <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">View</a>
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Edit</a>
-                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                            @if (OrgService.HasPermission(projectRole, "ManageProjects"))
+                            {
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                            }
+                            @if (OrgService.HasPermission(projectRole, "Delete"))
+                            {
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                            }
                         </td>
                     </tr>
                 }

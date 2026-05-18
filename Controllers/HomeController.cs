@@ -74,12 +74,25 @@ public class HomeController : Controller
                 ViewBag.TotalInvoices = await _context.Invoices
                     .CountAsync(i => i.OrganizationId == orgId);
 
-                ViewBag.RecentProjects = await _context.Projects
-                    .Include(p => p.Client)
-                    .Where(p => p.OrganizationId == orgId)
-                    .OrderByDescending(p => p.CreatedAt)
-                    .Take(5)
-                    .ToListAsync();
+                if (_orgService.HasPermission(role, "ViewAllProjects"))
+                {
+                    ViewBag.RecentProjects = await _context.Projects
+                        .Include(p => p.Client)
+                        .Where(p => p.OrganizationId == orgId)
+                        .OrderByDescending(p => p.CreatedAt)
+                        .Take(5)
+                        .ToListAsync();
+                }
+                else
+                {
+                    ViewBag.RecentProjects = await _context.Projects
+                        .Include(p => p.Client)
+                        .Where(p => p.OrganizationId == orgId
+                            && _context.ProjectAssignments.Any(a => a.ProjectId == p.Id && a.UserId == userId))
+                        .OrderByDescending(p => p.CreatedAt)
+                        .Take(5)
+                        .ToListAsync();
+                }
 
                 if (_orgService.HasPermission(role, "ViewAllTimeEntries"))
                 {

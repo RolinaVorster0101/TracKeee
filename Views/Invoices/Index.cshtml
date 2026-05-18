@@ -6,7 +6,13 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Invoices</h1>
-    <a asp-action="Generate" class="btn btn-primary">+ Generate Invoice</a>
+    @{
+        var invoiceRole = await OrgService.GetCurrentRole();
+    }
+    @if (OrgService.HasPermission(invoiceRole, "ManageInvoices"))
+    {
+        <a asp-action="Generate" class="btn btn-primary">+ Generate Invoice</a>
+    }
 </div>
 
 @if (TempData["Message"] != null)
@@ -51,7 +57,10 @@ else
                         </td>
                         <td class="text-end">
                             <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">View</a>
-                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                            @if (OrgService.HasPermission(invoiceRole, "Delete"))
+                            {
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                            }
                         </td>
                     </tr>
                 }

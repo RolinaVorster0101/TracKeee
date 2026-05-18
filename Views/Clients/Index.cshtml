@@ -6,7 +6,13 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Clients</h1>
-    <a asp-action="Create" class="btn btn-primary">+ Add Client</a>
+    @{
+        var clientRole = await OrgService.GetCurrentRole();
+    }
+    @if (OrgService.HasPermission(clientRole, "ManageClients"))
+    {
+        <a asp-action="Create" class="btn btn-primary">+ Add Client</a>
+    }
 </div>
 
 @if (!Model.Any())
@@ -40,8 +46,14 @@ else
                         <td>@Html.DisplayFor(modelItem => item.VatNumber)</td>
                         <td class="text-end">
                             <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">View</a>
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Edit</a>
-                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                            @if (OrgService.HasPermission(clientRole, "ManageClients"))
+                            {
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                            }
+                            @if (OrgService.HasPermission(clientRole, "Delete"))
+                            {
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                            }
                         </td>
                     </tr>
                 }

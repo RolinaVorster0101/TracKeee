@@ -25,27 +25,48 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
-                        @if (User.Identity != null && User.Identity.IsAuthenticated)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Clients" asp-action="Index">Clients</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Projects" asp-action="Index">Projects</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="TimeEntries" asp-action="Index">Time</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Invoices" asp-action="Index">Invoices</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Settings" asp-action="Index">Settings</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Organizations" asp-action="Team">Team</a>
-                            </li>
-                        }
+@if (User.Identity != null && User.Identity.IsAuthenticated)
+{
+    try
+    {
+        var navRole = await OrgService.GetCurrentRole();
+
+        @if (OrgService.HasPermission(navRole, "ViewAllClients"))
+        {
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-area="" asp-controller="Clients" asp-action="Index">Clients</a>
+            </li>
+        }
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Projects" asp-action="Index">Projects</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="" asp-controller="TimeEntries" asp-action="Index">Time</a>
+        </li>
+        @if (OrgService.HasPermission(navRole, "ManageInvoices"))
+        {
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-area="" asp-controller="Invoices" asp-action="Index">Invoices</a>
+            </li>
+        }
+        @if (OrgService.HasPermission(navRole, "ManageSettings"))
+        {
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-area="" asp-controller="Settings" asp-action="Index">Settings</a>
+            </li>
+        }
+        @if (OrgService.HasPermission(navRole, "ManageTeam"))
+        {
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-area="" asp-controller="Organizations" asp-action="Team">Team</a>
+            </li>
+        }
+    }
+    catch
+    {
+        // User has no organization yet — show nothing
+    }
+}
                     </ul>
                     <partial name="_LoginPartial" />
                 </div>
@@ -69,12 +90,27 @@
                     <h6 class="text-uppercase mb-3">Quick Links</h6>
                     <ul class="list-unstyled">
                         <li class="mb-2"><a href="/" class="text-muted text-decoration-none">Home</a></li>
-                        @if (User.Identity != null && User.Identity.IsAuthenticated)
+@if (User.Identity != null && User.Identity.IsAuthenticated)
                         {
-                            <li class="mb-2"><a asp-controller="Clients" asp-action="Index" class="text-muted text-decoration-none">Clients</a></li>
-                            <li class="mb-2"><a asp-controller="Projects" asp-action="Index" class="text-muted text-decoration-none">Projects</a></li>
-                            <li class="mb-2"><a asp-controller="TimeEntries" asp-action="Index" class="text-muted text-decoration-none">Time Entries</a></li>
-                            <li class="mb-2"><a asp-controller="Invoices" asp-action="Index" class="text-muted text-decoration-none">Invoices</a></li>
+                            try
+                            {
+                                var footerRole = await OrgService.GetCurrentRole();
+
+                                @if (OrgService.HasPermission(footerRole, "ViewAllClients"))
+                                {
+                                    <li class="mb-2"><a asp-controller="Clients" asp-action="Index" class="text-muted text-decoration-none">Clients</a></li>
+                                }
+                                <li class="mb-2"><a asp-controller="Projects" asp-action="Index" class="text-muted text-decoration-none">Projects</a></li>
+                                <li class="mb-2"><a asp-controller="TimeEntries" asp-action="Index" class="text-muted text-decoration-none">Time</a></li>
+                                @if (OrgService.HasPermission(footerRole, "ManageInvoices"))
+                                {
+                                    <li class="mb-2"><a asp-controller="Invoices" asp-action="Index" class="text-muted text-decoration-none">Invoices</a></li>
+                                }
+                            }
+                            catch
+                            {
+                                // No organization yet
+                            }
                         }
                         else
                         {
