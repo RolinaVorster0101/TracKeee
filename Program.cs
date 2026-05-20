@@ -6,13 +6,38 @@ var connectionString = builder.Configuration.GetConnectionString("ApplicationDbC
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddDefaultIdentity<IdentityUser>(options =>
+{
+    // Email confirmation
+    options.SignIn.RequireConfirmedAccount = true;
+
+    // Password requirements
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequiredLength = 8;
+
+    // Account lockout after failed attempts
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers = true;
+}).AddEntityFrameworkStores<ApplicationDbContext>();
+
 builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, TracKeee.Services.BrevoEmailSender>();
 builder.Services.AddTransient<TracKeee.Services.InvoicePdfService>();
 builder.Services.AddHttpClient();
 builder.Services.AddTransient<TracKeee.Services.YocoPaymentService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<TracKeee.Services.OrganizationService>();
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    options.SlidingExpiration = true;
+    options.LoginPath = "/Identity/Account/Login";
+    options.LogoutPath = "/Identity/Account/Logout";
+    options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+});
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -32,6 +57,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

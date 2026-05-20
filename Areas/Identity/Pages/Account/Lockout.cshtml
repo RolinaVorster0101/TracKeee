@@ -1,0 +1,25 @@
+﻿@page
+@{
+    ViewData["Title"] = "Account Locked";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 text-center">
+        <div class="card shadow-sm">
+            <div class="card-body py-5">
+                <h1 class="text-danger mb-3">🔒</h1>
+                <h2>Account Locked</h2>
+                <p class="text-muted mt-3">
+                    Your account has been temporarily locked due to too many failed login attempts.
+                </p>
+                <p class="text-muted">
+                    Please wait <strong>15 minutes</strong> before trying again, or use the link below to reset your password.
+                </p>
+                <div class="mt-4">
+                    <a asp-page="./ForgotPassword" class="btn btn-primary">Reset Password</a>
+                    <a asp-page="./Login" class="btn btn-secondary">Try Again Later</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
