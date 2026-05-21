@@ -20,7 +20,6 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     public DbSet<TimeEntry> TimeEntries { get; set; }
     public DbSet<Invoice> Invoices { get; set; }
     public DbSet<BusinessProfile> BusinessProfiles { get; set; }
-
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -71,4 +70,5 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
             .HasForeignKey(b => b.OrganizationId)
             .OnDelete(DeleteBehavior.Restrict);
     }
+    public DbSet<ActiveTimer> ActiveTimers { get; set; }
 }

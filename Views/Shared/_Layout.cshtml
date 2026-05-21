@@ -71,6 +71,10 @@
                     <partial name="_LoginPartial" />
                 </div>
             </div>
+            @if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                <div id="timerWidget" class="me-3"></div>
+            }
         </nav>
     </header>
     <div class="container flex-grow-1">
@@ -180,6 +184,9 @@
             document.getElementById('cookieConsent').style.display = 'none';
         }
     </script>
-
+    @if (User.Identity != null && User.Identity.IsAuthenticated)
+    {
+        <script src="~/js/timer.js"></script>
+    }
 </body>
 </html>
