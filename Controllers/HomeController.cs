@@ -1,6 +1,7 @@
-using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 using TracKeee.Areas.Identity.Data;
 using TracKeee.Models;
 using TracKeee.Services;
@@ -153,5 +154,74 @@ public class HomeController : Controller
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> ChartHoursByMonth()
+    {
+        var orgId = await _orgService.GetCurrentOrganizationId();
+        var sixMonthsAgo = DateTime.Today.AddMonths(-5);
+        var startDate = new DateTime(sixMonthsAgo.Year, sixMonthsAgo.Month, 1);
+
+        var data = await _context.TimeEntries
+            .Where(t => t.OrganizationId == orgId && t.Date >= startDate)
+            .GroupBy(t => new { t.Date.Year, t.Date.Month })
+            .Select(g => new
+            {
+                year = g.Key.Year,
+                month = g.Key.Month,
+                hours = g.Sum(t => t.Hours)
+            })
+            .OrderBy(g => g.year).ThenBy(g => g.month)
+            .ToListAsync();
+
+        return Json(data);
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> ChartRevenueByMonth()
+    {
+        var orgId = await _orgService.GetCurrentOrganizationId();
+        var sixMonthsAgo = DateTime.Today.AddMonths(-5);
+        var startDate = new DateTime(sixMonthsAgo.Year, sixMonthsAgo.Month, 1);
+
+        var data = await _context.Invoices
+            .Where(i => i.OrganizationId == orgId && i.IssueDate >= startDate)
+            .GroupBy(i => new { i.IssueDate.Year, i.IssueDate.Month })
+            .Select(g => new
+            {
+                year = g.Key.Year,
+                month = g.Key.Month,
+                total = g.Sum(i => i.Total)
+            })
+            .OrderBy(g => g.year).ThenBy(g => g.month)
+            .ToListAsync();
+
+        return Json(data);
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> ChartHoursByClient()
+    {
+        var orgId = await _orgService.GetCurrentOrganizationId();
+
+        var data = await _context.TimeEntries
+            .Include(t => t.Project)
+                .ThenInclude(p => p!.Client)
+            .Where(t => t.OrganizationId == orgId)
+            .GroupBy(t => t.Project!.Client!.Name)
+            .Select(g => new
+            {
+                client = g.Key,
+                hours = g.Sum(t => t.Hours)
+            })
+            .OrderByDescending(g => g.hours)
+            .Take(8)
+            .ToListAsync();
+
+        return Json(data);
     }
 }

@@ -184,6 +184,37 @@
         }
     </div>
 
+    <!-- Charts -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted mb-3">Hours by Month</h6>
+                    <div style="height: 200px;"><canvas id="hoursChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+        @if (OrgService.HasPermission(dashRole, "ViewFinancials"))
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-3">Revenue by Month</h6>
+                        <div style="height: 200px;"><canvas id="revenueChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        }
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted mb-3">Hours by Client</h6>
+                    <div style="height: 200px;"><canvas id="clientsChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Recent Projects -->
     <div class="row">
         <div class="col-12 mb-4">
@@ -271,6 +302,10 @@ else
             </div>
         </div>
     </div>
+}
+
+@section Scripts {
+    <script src="~/js/charts.js"></script>
 }
 
 @functions {
