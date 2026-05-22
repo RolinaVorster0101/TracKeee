@@ -15,13 +15,15 @@ namespace TracKeee.Controllers
         private readonly OrganizationService _orgService;
         private readonly InvoicePdfService _pdfService;
         private readonly YocoPaymentService _yocoService;
+        private readonly InvoiceEmailService _emailService;
 
-        public InvoicesController(ApplicationDbContext context, OrganizationService orgService, InvoicePdfService pdfService, YocoPaymentService yocoService)
+        public InvoicesController(ApplicationDbContext context, OrganizationService orgService, InvoicePdfService pdfService, YocoPaymentService yocoService, InvoiceEmailService emailService)
         {
             _context = context;
             _orgService = orgService;
             _pdfService = pdfService;
             _yocoService = yocoService;
+            _emailService = emailService;
         }
 
         public async Task<IActionResult> Index(string? search, string? status, DateTime? dateFrom, DateTime? dateTo)
@@ -260,8 +262,84 @@ namespace TracKeee.Controllers
             return File(pdfBytes, "application/pdf", $"{invoice.InvoiceNumber}.pdf");
         }
 
+        // POST: Invoices/SendEmail/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendEmail(int id)
+        {
+            var orgId = await _orgService.GetCurrentOrganizationId();
+            var invoice = await _context.Invoices
+                .Include(i => i.Client)
+                .Include(i => i.TimeEntries)
+                    .ThenInclude(t => t.Project)
+                .FirstOrDefaultAsync(i => i.Id == id && i.OrganizationId == orgId);
+
+            if (invoice == null) return NotFound();
+
+            if (string.IsNullOrEmpty(invoice.Client?.Email))
+            {
+                TempData["Message"] = "This client doesn't have an email address. Add one in Client details first.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            // Get business profile for branding
+            var profile = await _context.BusinessProfiles
+                .FirstOrDefaultAsync(p => p.OrganizationId == orgId);
+
+            // Generate PDF
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var paymentUrl = $"{baseUrl}/Invoices/PayInvoice/{invoice.Id}";
+            var pdfBytes = _pdfService.GenerateInvoicePdf(invoice, profile, paymentUrl);
+
+            var businessName = profile?.BusinessName ?? "TracKeee";
+            var fromName = profile?.ContactName ?? businessName;
+
+            // Build email body
+            var emailBody = $@"
+                <div style='font-family: Arial, sans-serif; max-width: 600px;'>
+                    <h2>Invoice {invoice.InvoiceNumber}</h2>
+                    <p>Dear {invoice.Client.ContactPerson ?? invoice.Client.Name},</p>
+                    <p>Please find attached invoice <strong>{invoice.InvoiceNumber}</strong> from <strong>{businessName}</strong>.</p>
+                    <table style='margin: 20px 0;'>
+                        <tr><td style='padding: 5px 20px 5px 0;'>Invoice Number:</td><td><strong>{invoice.InvoiceNumber}</strong></td></tr>
+                        <tr><td style='padding: 5px 20px 5px 0;'>Issue Date:</td><td>{invoice.IssueDate:dd MMM yyyy}</td></tr>
+                        <tr><td style='padding: 5px 20px 5px 0;'>Due Date:</td><td>{invoice.DueDate:dd MMM yyyy}</td></tr>
+                        <tr><td style='padding: 5px 20px 5px 0;'>Total:</td><td><strong>R {invoice.Total:N2}</strong></td></tr>
+                    </table>
+                    <p><a href='{paymentUrl}' style='background-color: #1D9E75; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Pay Online</a></p>
+                    <p style='color: #666; font-size: 12px; margin-top: 30px;'>This invoice was sent via TracKeee on behalf of {businessName}.</p>
+                </div>";
+
+            var sent = await _emailService.SendInvoiceEmail(
+                invoice.Client.Email,
+                invoice.Client.ContactPerson ?? invoice.Client.Name,
+                $"Invoice {invoice.InvoiceNumber} from {businessName}",
+                emailBody,
+                pdfBytes,
+                $"{invoice.InvoiceNumber}.pdf",
+                fromName);
+
+            if (sent)
+            {
+                // Auto-mark as sent if still draft
+                if (invoice.Status == InvoiceStatus.Draft)
+                {
+                    invoice.Status = InvoiceStatus.Sent;
+                    await _context.SaveChangesAsync();
+                }
+                TempData["Message"] = $"Invoice emailed to {invoice.Client.Email} successfully.";
+            }
+            else
+            {
+                TempData["Message"] = "Failed to send email. Please try again later.";
+            }
+
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+
         public async Task<IActionResult> Pay(int id)
         {
             var orgId = await _orgService.GetCurrentOrganizationId();

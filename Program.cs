@@ -42,6 +42,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddTransient<TracKeee.Services.InvoiceEmailService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
