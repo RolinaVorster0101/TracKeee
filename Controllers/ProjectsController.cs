@@ -20,33 +20,44 @@ namespace TracKeee.Controllers
             _orgService = orgService;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search, string? status)
         {
             var orgId = await _orgService.GetCurrentOrganizationId();
             var role = await _orgService.GetCurrentRole();
             var userId = await _orgService.GetCurrentUserId();
 
-            List<Project> projects;
+            IQueryable<Project> query;
 
             if (_orgService.HasPermission(role, "ViewAllProjects"))
             {
-                projects = await _context.Projects
+                query = _context.Projects
                     .Include(p => p.Client)
-                    .Where(p => p.OrganizationId == orgId)
-                    .OrderBy(p => p.Name)
-                    .ToListAsync();
+                    .Where(p => p.OrganizationId == orgId);
             }
             else
             {
-                // Employee — only assigned projects
-                projects = await _context.Projects
+                query = _context.Projects
                     .Include(p => p.Client)
                     .Where(p => p.OrganizationId == orgId
-                        && _context.ProjectAssignments.Any(a => a.ProjectId == p.Id && a.UserId == userId))
-                    .OrderBy(p => p.Name)
-                    .ToListAsync();
+                        && _context.ProjectAssignments.Any(a => a.ProjectId == p.Id && a.UserId == userId));
             }
 
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim().ToLower();
+                query = query.Where(p => p.Name.ToLower().Contains(search)
+                    || (p.Client != null && p.Client.Name.ToLower().Contains(search)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<ProjectStatus>(status, out var statusEnum))
+            {
+                query = query.Where(p => p.Status == statusEnum);
+            }
+
+            ViewBag.Search = search;
+            ViewBag.Status = status;
+
+            var projects = await query.OrderBy(p => p.Name).ToListAsync();
             return View(projects);
         }
 

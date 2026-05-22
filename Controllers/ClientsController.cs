@@ -19,17 +19,26 @@ namespace TracKeee.Controllers
             _orgService = orgService;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search)
         {
             var orgId = await _orgService.GetCurrentOrganizationId();
             var role = await _orgService.GetCurrentRole();
             if (!_orgService.HasPermission(role, "ViewAllClients"))
                 return Forbid();
 
-            var clients = await _context.Clients
-                .Where(c => c.OrganizationId == orgId)
-                .OrderBy(c => c.Name)
-                .ToListAsync();
+            var query = _context.Clients
+                .Where(c => c.OrganizationId == orgId);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim().ToLower();
+                query = query.Where(c => c.Name.ToLower().Contains(search)
+                    || (c.ContactPerson != null && c.ContactPerson.ToLower().Contains(search))
+                    || (c.Email != null && c.Email.ToLower().Contains(search)));
+            }
+
+            ViewBag.Search = search;
+            var clients = await query.OrderBy(c => c.Name).ToListAsync();
             return View(clients);
         }
 

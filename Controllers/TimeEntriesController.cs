@@ -20,34 +20,78 @@ namespace TracKeee.Controllers
             _orgService = orgService;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search, int? projectId, DateTime? dateFrom, DateTime? dateTo)
         {
             var orgId = await _orgService.GetCurrentOrganizationId();
             var role = await _orgService.GetCurrentRole();
             var userId = await _orgService.GetCurrentUserId();
 
-            List<TimeEntry> entries;
+            IQueryable<TimeEntry> query;
 
             if (_orgService.HasPermission(role, "ViewAllTimeEntries"))
             {
-                entries = await _context.TimeEntries
+                query = _context.TimeEntries
                     .Include(t => t.Project)
                         .ThenInclude(p => p!.Client)
-                    .Where(t => t.OrganizationId == orgId)
-                    .OrderByDescending(t => t.Date)
-                    .ThenByDescending(t => t.CreatedAt)
-                    .ToListAsync();
+                    .Where(t => t.OrganizationId == orgId);
             }
             else
             {
-                entries = await _context.TimeEntries
+                query = _context.TimeEntries
                     .Include(t => t.Project)
                         .ThenInclude(p => p!.Client)
-                    .Where(t => t.OrganizationId == orgId && t.UserId == userId)
-                    .OrderByDescending(t => t.Date)
-                    .ThenByDescending(t => t.CreatedAt)
-                    .ToListAsync();
+                    .Where(t => t.OrganizationId == orgId && t.UserId == userId);
             }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim().ToLower();
+                query = query.Where(t => (t.Description != null && t.Description.ToLower().Contains(search))
+                    || t.Project!.Name.ToLower().Contains(search)
+                    || t.Project!.Client!.Name.ToLower().Contains(search));
+            }
+
+            if (projectId.HasValue)
+            {
+                query = query.Where(t => t.ProjectId == projectId.Value);
+            }
+
+            if (dateFrom.HasValue)
+            {
+                query = query.Where(t => t.Date >= dateFrom.Value);
+            }
+
+            if (dateTo.HasValue)
+            {
+                query = query.Where(t => t.Date <= dateTo.Value);
+            }
+
+            ViewBag.Search = search;
+            ViewBag.ProjectId = projectId;
+            ViewBag.DateFrom = dateFrom?.ToString("yyyy-MM-dd");
+            ViewBag.DateTo = dateTo?.ToString("yyyy-MM-dd");
+
+            // Populate project dropdown for filter
+            var projectQuery = _context.Projects
+                .Include(p => p.Client)
+                .Where(p => p.OrganizationId == orgId);
+
+            if (!_orgService.HasPermission(role, "ViewAllProjects"))
+            {
+                projectQuery = projectQuery.Where(p => _context.ProjectAssignments
+                    .Any(a => a.ProjectId == p.Id && a.UserId == userId));
+            }
+
+            ViewBag.Projects = await projectQuery
+                .OrderBy(p => p.Client!.Name)
+                .ThenBy(p => p.Name)
+                .Select(p => new { p.Id, Name = p.Client!.Name + " — " + p.Name })
+                .ToListAsync();
+
+            var entries = await query
+                .OrderByDescending(t => t.Date)
+                .ThenByDescending(t => t.CreatedAt)
+                .ToListAsync();
 
             return View(entries);
         }

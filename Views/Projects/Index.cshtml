@@ -15,9 +15,41 @@
     }
 </div>
 
+<form method="get" class="mb-3">
+    <div class="row g-2" style="max-width: 600px;">
+        <div class="col">
+            <input type="text" name="search" class="form-control" placeholder="Search projects or clients..." value="@ViewBag.Search" />
+        </div>
+        <div class="col-auto">
+            <select name="status" class="form-select">
+                <option value="">All Statuses</option>
+                <option value="Active" selected="@(ViewBag.Status == "Active")">Active</option>
+                <option value="OnHold" selected="@(ViewBag.Status == "OnHold")">On Hold</option>
+                <option value="Completed" selected="@(ViewBag.Status == "Completed")">Completed</option>
+                <option value="Cancelled" selected="@(ViewBag.Status == "Cancelled")">Cancelled</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-outline-secondary">Filter</button>
+        </div>
+        @if (!string.IsNullOrEmpty(ViewBag.Search as string) || !string.IsNullOrEmpty(ViewBag.Status as string))
+        {
+            <div class="col-auto">
+                <a asp-action="Index" class="btn btn-outline-danger">Clear</a>
+            </div>
+        }
+    </div>
+</form>
+
 @if (!Model.Any())
 {
-    @if (OrgService.HasPermission(projectRole, "ManageProjects"))
+    @if (!string.IsNullOrEmpty(ViewBag.Search as string) || !string.IsNullOrEmpty(ViewBag.Status as string))
+    {
+        <div class="alert alert-warning">
+            No projects match your filters. <a asp-action="Index">Clear filters</a> to see all projects.
+        </div>
+    }
+    else if (OrgService.HasPermission(projectRole, "ManageProjects"))
     {
         <div class="alert alert-info">
             You don't have any projects yet. <a asp-action="Create">Add your first project</a> to get started.

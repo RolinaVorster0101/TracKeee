@@ -15,11 +15,37 @@
     }
 </div>
 
+<form method="get" class="mb-3">
+    <div class="input-group" style="max-width: 400px;">
+        <input type="text" name="search" class="form-control" placeholder="Search clients..." value="@ViewBag.Search" />
+        <button type="submit" class="btn btn-outline-secondary">Search</button>
+        @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+        {
+            <a asp-action="Index" class="btn btn-outline-danger">Clear</a>
+        }
+    </div>
+</form>
+
 @if (!Model.Any())
 {
-    <div class="alert alert-info">
-        You don't have any clients yet. <a asp-action="Create">Add your first client</a> to get started.
-    </div>
+    @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+    {
+        <div class="alert alert-warning">
+            No clients match your search. <a asp-action="Index">Clear search</a> to see all clients.
+        </div>
+    }
+    else if (OrgService.HasPermission(clientRole, "ManageClients"))
+    {
+        <div class="alert alert-info">
+            You don't have any clients yet. <a asp-action="Create">Add your first client</a> to get started.
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            No clients to display.
+        </div>
+    }
 }
 else
 {

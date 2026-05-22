@@ -20,11 +20,53 @@
     <div class="alert alert-info">@TempData["Message"]</div>
 }
 
+<form method="get" class="mb-3">
+    <div class="row g-2">
+        <div class="col-md-3">
+            <input type="text" name="search" class="form-control" placeholder="Search invoice # or client..." value="@ViewBag.Search" />
+        </div>
+        <div class="col-md-2">
+            <select name="status" class="form-select">
+                <option value="">All Statuses</option>
+                <option value="Draft" selected="@(ViewBag.Status == "Draft")">Draft</option>
+                <option value="Sent" selected="@(ViewBag.Status == "Sent")">Sent</option>
+                <option value="Paid" selected="@(ViewBag.Status == "Paid")">Paid</option>
+                <option value="Overdue" selected="@(ViewBag.Status == "Overdue")">Overdue</option>
+                <option value="Cancelled" selected="@(ViewBag.Status == "Cancelled")">Cancelled</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="dateFrom" class="form-control" value="@ViewBag.DateFrom" placeholder="From" />
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="dateTo" class="form-control" value="@ViewBag.DateTo" placeholder="To" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-outline-secondary">Filter</button>
+        </div>
+        @if (!string.IsNullOrEmpty(ViewBag.Search as string) || !string.IsNullOrEmpty(ViewBag.Status as string) || ViewBag.DateFrom != null || ViewBag.DateTo != null)
+        {
+            <div class="col-auto">
+                <a asp-action="Index" class="btn btn-outline-danger">Clear</a>
+            </div>
+        }
+    </div>
+</form>
+
 @if (!Model.Any())
 {
-    <div class="alert alert-info">
-        No invoices yet. <a asp-action="Generate">Generate your first invoice</a> from logged time entries.
-    </div>
+    @if (!string.IsNullOrEmpty(ViewBag.Search as string) || !string.IsNullOrEmpty(ViewBag.Status as string) || ViewBag.DateFrom != null || ViewBag.DateTo != null)
+    {
+        <div class="alert alert-warning">
+            No invoices match your filters. <a asp-action="Index">Clear filters</a> to see all invoices.
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            No invoices yet. <a asp-action="Generate">Generate your first invoice</a> from logged time entries.
+        </div>
+    }
 }
 else
 {

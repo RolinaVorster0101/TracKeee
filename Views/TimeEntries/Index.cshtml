@@ -9,11 +9,55 @@
     <a asp-action="Create" class="btn btn-primary">+ Log Time</a>
 </div>
 
+<form method="get" class="mb-3">
+    <div class="row g-2">
+        <div class="col-md-3">
+            <input type="text" name="search" class="form-control" placeholder="Search description, project..." value="@ViewBag.Search" />
+        </div>
+        <div class="col-md-3">
+            <select name="projectId" class="form-select">
+                <option value="">All Projects</option>
+                @if (ViewBag.Projects != null)
+                {
+                    @foreach (var p in ViewBag.Projects)
+                    {
+                        <option value="@p.Id" selected="@(ViewBag.ProjectId != null && ViewBag.ProjectId == p.Id)">@p.Name</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="dateFrom" class="form-control" value="@ViewBag.DateFrom" placeholder="From" />
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="dateTo" class="form-control" value="@ViewBag.DateTo" placeholder="To" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-outline-secondary">Filter</button>
+        </div>
+        @if (!string.IsNullOrEmpty(ViewBag.Search as string) || ViewBag.ProjectId != null || ViewBag.DateFrom != null || ViewBag.DateTo != null)
+        {
+            <div class="col-auto">
+                <a asp-action="Index" class="btn btn-outline-danger">Clear</a>
+            </div>
+        }
+    </div>
+</form>
+
 @if (!Model.Any())
 {
-    <div class="alert alert-info">
-        You don't have any time entries yet. <a asp-action="Create">Log your first hours</a> to get started.
-    </div>
+    @if (!string.IsNullOrEmpty(ViewBag.Search as string) || ViewBag.ProjectId != null || ViewBag.DateFrom != null || ViewBag.DateTo != null)
+    {
+        <div class="alert alert-warning">
+            No time entries match your search. <a asp-action="Index">Clear filters</a> to see all entries.
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            You don't have any time entries yet. <a asp-action="Create">Log your first hours</a> to get started.
+        </div>
+    }
 }
 else
 {

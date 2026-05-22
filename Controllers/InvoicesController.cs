@@ -24,16 +24,45 @@ namespace TracKeee.Controllers
             _yocoService = yocoService;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search, string? status, DateTime? dateFrom, DateTime? dateTo)
         {
             var orgId = await _orgService.GetCurrentOrganizationId();
             var role = await _orgService.GetCurrentRole();
             if (!_orgService.HasPermission(role, "ManageInvoices"))
                 return Forbid();
 
-            var invoices = await _context.Invoices
+            var query = _context.Invoices
                 .Include(i => i.Client)
-                .Where(i => i.OrganizationId == orgId)
+                .Where(i => i.OrganizationId == orgId);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim().ToLower();
+                query = query.Where(i => i.InvoiceNumber.ToLower().Contains(search)
+                    || (i.Client != null && i.Client.Name.ToLower().Contains(search)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<InvoiceStatus>(status, out var statusEnum))
+            {
+                query = query.Where(i => i.Status == statusEnum);
+            }
+
+            if (dateFrom.HasValue)
+            {
+                query = query.Where(i => i.IssueDate >= dateFrom.Value);
+            }
+
+            if (dateTo.HasValue)
+            {
+                query = query.Where(i => i.IssueDate <= dateTo.Value);
+            }
+
+            ViewBag.Search = search;
+            ViewBag.Status = status;
+            ViewBag.DateFrom = dateFrom?.ToString("yyyy-MM-dd");
+            ViewBag.DateTo = dateTo?.ToString("yyyy-MM-dd");
+
+            var invoices = await query
                 .OrderByDescending(i => i.IssueDate)
                 .ToListAsync();
             return View(invoices);
