@@ -49,6 +49,12 @@
                 <a class="nav-link text-dark" asp-area="" asp-controller="Invoices" asp-action="Index">Invoices</a>
             </li>
         }
+        @if (OrgService.HasPermission(navRole, "ViewFinancials"))
+        {
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-area="" asp-controller="Reports" asp-action="Index">Reports</a>
+            </li>
+        }
         @if (OrgService.HasPermission(navRole, "ManageSettings"))
         {
             <li class="nav-item">

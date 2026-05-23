@@ -1,0 +1,199 @@
+﻿@using TracKeee.Models
+@{
+    ViewData["Title"] = "Reports";
+}
+
+<h1>Reports</h1>
+<hr />
+
+<form method="get" class="mb-4">
+    <div class="row g-2" style="max-width: 500px;">
+        <div class="col">
+            <label class="small text-muted">From</label>
+            <input type="date" name="dateFrom" class="form-control" value="@ViewBag.DateFrom" />
+        </div>
+        <div class="col">
+            <label class="small text-muted">To</label>
+            <input type="date" name="dateTo" class="form-control" value="@ViewBag.DateTo" />
+        </div>
+        <div class="col-auto d-flex align-items-end">
+            <button type="submit" class="btn btn-primary">Update</button>
+        </div>
+    </div>
+</form>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+                <h3 class="mb-0">@(((decimal)ViewBag.TotalHours).ToString("N1"))h</h3>
+                <small class="text-muted">Total Hours</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+                <h3 class="mb-0">R @(((decimal)ViewBag.TotalValue).ToString("N2"))</h3>
+                <small class="text-muted">Total Value</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm bg-success bg-opacity-10">
+            <div class="card-body text-center">
+                <h3 class="mb-0">R @(((decimal)ViewBag.TotalPaid).ToString("N2"))</h3>
+                <small class="text-muted">Paid</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm bg-danger bg-opacity-10">
+            <div class="card-body text-center">
+                <h3 class="mb-0">R @(((decimal)ViewBag.TotalUnpaid).ToString("N2"))</h3>
+                <small class="text-muted">Outstanding</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Hours by Client -->
+    <div class="col-md-6 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white"><strong>Hours by Client</strong></div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Client</th>
+                            <th class="text-end">Hours</th>
+                            <th class="text-end">Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (ViewBag.HoursByClient != null)
+                        {
+                            @foreach (var item in ViewBag.HoursByClient)
+                            {
+                                <tr>
+                                    <td>@item.Client</td>
+                                    <td class="text-end">@(((decimal)item.Hours).ToString("N1"))</td>
+                                    <td class="text-end">R @(((decimal)item.Value).ToString("N2"))</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hours by Project -->
+    <div class="col-md-6 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white"><strong>Hours by Project</strong></div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Project</th>
+                            <th>Client</th>
+                            <th class="text-end">Hours</th>
+                            <th class="text-end">Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (ViewBag.HoursByProject != null)
+                        {
+                            @foreach (var item in ViewBag.HoursByProject)
+                            {
+                                <tr>
+                                    <td><strong>@item.Project</strong></td>
+                                    <td><small class="text-muted">@item.Client</small></td>
+                                    <td class="text-end">@(((decimal)item.Hours).ToString("N1"))</td>
+                                    <td class="text-end">R @(((decimal)item.Value).ToString("N2"))</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invoice Breakdown -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white"><strong>Invoices in Period</strong></div>
+            <div class="card-body p-0">
+                @{
+                    var invoiceList = ViewBag.InvoiceBreakdown as List<Invoice>;
+                }
+                @if (invoiceList != null && invoiceList.Any())
+                {
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Invoice</th>
+                                <th>Client</th>
+                                <th>Date</th>
+                                <th class="text-end">Subtotal</th>
+                                <th class="text-end">VAT</th>
+                                <th class="text-end">Total</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var inv in invoiceList)
+                            {
+                                <tr>
+                                    <td><a asp-controller="Invoices" asp-action="Details" asp-route-id="@inv.Id">@inv.InvoiceNumber</a></td>
+                                    <td>@inv.Client?.Name</td>
+                                    <td>@inv.IssueDate.ToString("dd MMM yyyy")</td>
+                                    <td class="text-end">R @inv.Subtotal.ToString("N2")</td>
+                                    <td class="text-end">R @inv.VatAmount.ToString("N2")</td>
+                                    <td class="text-end"><strong>R @inv.Total.ToString("N2")</strong></td>
+                                    <td>
+                                        <span class="badge @GetStatusBadge(inv.Status)">@inv.Status</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-dark">
+                                <td colspan="3"><strong>Total</strong></td>
+                                <td class="text-end"><strong>R @invoiceList.Sum(i => i.Subtotal).ToString("N2")</strong></td>
+                                <td class="text-end"><strong>R @invoiceList.Sum(i => i.VatAmount).ToString("N2")</strong></td>
+                                <td class="text-end"><strong>R @invoiceList.Sum(i => i.Total).ToString("N2")</strong></td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                }
+                else
+                {
+                    <div class="p-3 text-muted">No invoices in this period.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatusBadge(InvoiceStatus status)
+    {
+        return status switch
+        {
+            InvoiceStatus.Draft => "bg-warning text-dark",
+            InvoiceStatus.Sent => "bg-primary",
+            InvoiceStatus.Paid => "bg-success",
+            InvoiceStatus.Overdue => "bg-danger",
+            InvoiceStatus.Cancelled => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+}
