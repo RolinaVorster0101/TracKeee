@@ -12,6 +12,10 @@
     @if (OrgService.HasPermission(invoiceRole, "ManageInvoices"))
     {
         <a asp-action="Generate" class="btn btn-primary">+ Generate Invoice</a>
+        @if (OrgService.HasPermission(invoiceRole, "ExportData"))
+        {
+            <a asp-action="Export" class="btn btn-outline-secondary">Export CSV</a>
+        }
     }
 </div>
 

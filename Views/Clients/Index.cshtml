@@ -13,6 +13,10 @@
     {
         <a asp-action="Create" class="btn btn-primary">+ Add Client</a>
     }
+    @if (OrgService.HasPermission(clientRole, "ExportData"))
+    {
+        <a asp-action="Export" class="btn btn-outline-secondary">Export CSV</a>
+    }
 </div>
 
 <form method="get" class="mb-3">

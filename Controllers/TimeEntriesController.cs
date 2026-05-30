@@ -263,5 +263,40 @@ namespace TracKeee.Controllers
 
             ViewBag.ProjectId = new SelectList(projects, "Id", "DisplayName", selectedProjectId);
         }
+
+        public async Task<IActionResult> Export(int? projectId, DateTime? dateFrom, DateTime? dateTo)
+        {
+            var role = await _orgService.GetCurrentRole();
+            if (!_orgService.HasPermission(role, "ExportData"))
+                return Forbid();
+
+            var orgId = await _orgService.GetCurrentOrganizationId();
+
+            var query = _context.TimeEntries
+                .Include(t => t.Project)
+                    .ThenInclude(p => p!.Client)
+                .Where(t => t.OrganizationId == orgId);
+
+            if (projectId.HasValue)
+                query = query.Where(t => t.ProjectId == projectId.Value);
+            if (dateFrom.HasValue)
+                query = query.Where(t => t.Date >= dateFrom.Value);
+            if (dateTo.HasValue)
+                query = query.Where(t => t.Date <= dateTo.Value);
+
+            var entries = await query.OrderByDescending(t => t.Date).ToListAsync();
+
+            var csv = new System.Text.StringBuilder();
+            csv.AppendLine("Date,Client,Project,Description,Hours,Rate,Amount,Invoiced");
+            foreach (var t in entries)
+            {
+                var rate = t.Project?.HourlyRate ?? 0;
+                var amount = t.Hours * rate;
+                csv.AppendLine($"{t.Date:yyyy-MM-dd},\"{t.Project?.Client?.Name}\",\"{t.Project?.Name}\",\"{t.Description?.Replace("\"", "\"\"")}\",{t.Hours:N2},{rate:N2},{amount:N2},{(t.IsInvoiced ? "Yes" : "No")}");
+            }
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+            return File(bytes, "text/csv", $"TimeEntries_{DateTime.Now:yyyyMMdd}.csv");
+        }
     }
 }

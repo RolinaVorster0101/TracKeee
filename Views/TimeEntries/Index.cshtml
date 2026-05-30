@@ -7,6 +7,10 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Time Entries</h1>
     <a asp-action="Create" class="btn btn-primary">+ Log Time</a>
+    @if (OrgService.HasPermission(await OrgService.GetCurrentRole(), "ExportData"))
+    {
+        <a asp-action="Export" class="btn btn-outline-secondary">Export CSV</a>
+    }
 </div>
 
 <form method="get" class="mb-3">

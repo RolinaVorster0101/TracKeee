@@ -164,5 +164,28 @@ namespace TracKeee.Controllers
             }
             return RedirectToAction(nameof(Index));
         }
+
+        public async Task<IActionResult> Export()
+        {
+            var role = await _orgService.GetCurrentRole();
+            if (!_orgService.HasPermission(role, "ExportData"))
+                return Forbid();
+
+            var orgId = await _orgService.GetCurrentOrganizationId();
+            var clients = await _context.Clients
+                .Where(c => c.OrganizationId == orgId)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            var csv = new System.Text.StringBuilder();
+            csv.AppendLine("Name,Contact Person,Email,Phone,VAT Number,Address,Notes");
+            foreach (var c in clients)
+            {
+                csv.AppendLine($"\"{c.Name}\",\"{c.ContactPerson}\",\"{c.Email}\",\"{c.Phone}\",\"{c.VatNumber}\",\"{c.Address?.Replace("\"", "\"\"")}\",\"{c.Notes?.Replace("\"", "\"\"")}\"");
+            }
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+            return File(bytes, "text/csv", $"Clients_{DateTime.Now:yyyyMMdd}.csv");
+        }
     }
 }

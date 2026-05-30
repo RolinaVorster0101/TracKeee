@@ -475,5 +475,29 @@ namespace TracKeee.Controllers
 
             return NotFound();
         }
+
+        public async Task<IActionResult> Export()
+        {
+            var role = await _orgService.GetCurrentRole();
+            if (!_orgService.HasPermission(role, "ExportData"))
+                return Forbid();
+
+            var orgId = await _orgService.GetCurrentOrganizationId();
+            var invoices = await _context.Invoices
+                .Include(i => i.Client)
+                .Where(i => i.OrganizationId == orgId)
+                .OrderByDescending(i => i.IssueDate)
+                .ToListAsync();
+
+            var csv = new System.Text.StringBuilder();
+            csv.AppendLine("Invoice Number,Client,Issue Date,Due Date,Subtotal,VAT,Total,Status");
+            foreach (var i in invoices)
+            {
+                csv.AppendLine($"{i.InvoiceNumber},\"{i.Client?.Name}\",{i.IssueDate:yyyy-MM-dd},{i.DueDate:yyyy-MM-dd},{i.Subtotal:N2},{i.VatAmount:N2},{i.Total:N2},{i.Status}");
+            }
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+            return File(bytes, "text/csv", $"Invoices_{DateTime.Now:yyyyMMdd}.csv");
+        }
     }
 }
