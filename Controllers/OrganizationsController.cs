@@ -15,12 +15,14 @@ namespace TracKeee.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly OrganizationService _orgService;
+        private readonly ActivityLogService _activityLog;
 
-        public OrganizationsController(ApplicationDbContext context, UserManager<IdentityUser> userManager, OrganizationService orgService)
+        public OrganizationsController(ApplicationDbContext context, UserManager<IdentityUser> userManager, OrganizationService orgService, ActivityLogService activityLog)
         {
             _context = context;
             _userManager = userManager;
             _orgService = orgService;
+            _activityLog = activityLog;
         }
 
         public async Task<IActionResult> Create()
@@ -125,6 +127,7 @@ namespace TracKeee.Controllers
 
             _context.OrganizationMembers.Add(membership);
             await _context.SaveChangesAsync();
+            await _activityLog.LogActivity("Invited", "Team", email, membership.Id, $"Added as {role}");
 
             TempData["Message"] = $"{email} has been added as {role}.";
             return RedirectToAction(nameof(Team));
@@ -152,6 +155,8 @@ namespace TracKeee.Controllers
 
             member.Role = newRole;
             await _context.SaveChangesAsync();
+            var user = await _userManager.FindByIdAsync(member.UserId);
+            await _activityLog.LogActivity("Changed Role", "Team", user?.Email, member.Id, $"Changed to {newRole}");
 
             TempData["Message"] = "Role updated successfully.";
             return RedirectToAction(nameof(Team));
@@ -179,6 +184,8 @@ namespace TracKeee.Controllers
 
             _context.OrganizationMembers.Remove(member);
             await _context.SaveChangesAsync();
+            var removedUser = await _userManager.FindByIdAsync(member.UserId);
+            await _activityLog.LogActivity("Removed", "Team", removedUser?.Email, member.Id);
 
             TempData["Message"] = "Team member removed.";
             return RedirectToAction(nameof(Team));

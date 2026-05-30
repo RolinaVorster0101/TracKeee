@@ -14,10 +14,11 @@ namespace TracKeee.Controllers
         private readonly ApplicationDbContext _context;
         private readonly OrganizationService _orgService;
 
-        public ProjectsController(ApplicationDbContext context, OrganizationService orgService)
+        public ProjectsController(ApplicationDbContext context, OrganizationService orgService, ActivityLogService activityLog)
         {
             _context = context;
             _orgService = orgService;
+            _activityLog = activityLog;
         }
 
         public async Task<IActionResult> Index(string? search, string? status)
@@ -100,6 +101,7 @@ namespace TracKeee.Controllers
                 project.CreatedAt = DateTime.UtcNow;
                 _context.Add(project);
                 await _context.SaveChangesAsync();
+                await _activityLog.LogActivity("Created", "Project", project.Name, project.Id);
                 return RedirectToAction(nameof(Index));
             }
             await PopulateClientsDropdown(project.ClientId);
@@ -150,6 +152,7 @@ namespace TracKeee.Controllers
                 existing.StartDate = project.StartDate;
                 existing.DueDate = project.DueDate;
                 await _context.SaveChangesAsync();
+                await _activityLog.LogActivity("Updated", "Project", existing.Name, existing.Id);
                 return RedirectToAction(nameof(Index));
             }
             await PopulateClientsDropdown(project.ClientId);
@@ -187,6 +190,7 @@ namespace TracKeee.Controllers
             {
                 _context.Projects.Remove(project);
                 await _context.SaveChangesAsync();
+                await _activityLog.LogActivity("Deleted", "Project", project.Name, project.Id);
             }
             return RedirectToAction(nameof(Index));
         }
@@ -200,5 +204,7 @@ namespace TracKeee.Controllers
                 .ToListAsync();
             ViewBag.ClientId = new SelectList(clients, "Id", "Name", selectedClientId);
         }
+
+        private readonly ActivityLogService _activityLog;
     }
 }

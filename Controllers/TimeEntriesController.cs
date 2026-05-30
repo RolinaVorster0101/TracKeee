@@ -14,10 +14,11 @@ namespace TracKeee.Controllers
         private readonly ApplicationDbContext _context;
         private readonly OrganizationService _orgService;
 
-        public TimeEntriesController(ApplicationDbContext context, OrganizationService orgService)
+        public TimeEntriesController(ApplicationDbContext context, OrganizationService orgService, ActivityLogService activityLog)
         {
             _context = context;
             _orgService = orgService;
+            _activityLog = activityLog;
         }
 
         public async Task<IActionResult> Index(string? search, int? projectId, DateTime? dateFrom, DateTime? dateTo)
@@ -137,6 +138,7 @@ namespace TracKeee.Controllers
                 entry.CreatedAt = DateTime.UtcNow;
                 _context.Add(entry);
                 await _context.SaveChangesAsync();
+                await _activityLog.LogActivity("Created", "TimeEntry", entry.Description, entry.Id, $"{entry.Hours}h logged");
                 return RedirectToAction(nameof(Index));
             }
             await PopulateProjectsDropdown(entry.ProjectId);
@@ -191,6 +193,7 @@ namespace TracKeee.Controllers
                 existing.Hours = entry.Hours;
                 existing.Description = entry.Description;
                 await _context.SaveChangesAsync();
+                await _activityLog.LogActivity("Updated", "TimeEntry", existing.Description, existing.Id);
                 return RedirectToAction(nameof(Index));
             }
             await PopulateProjectsDropdown(entry.ProjectId);
@@ -234,6 +237,7 @@ namespace TracKeee.Controllers
 
                 _context.TimeEntries.Remove(entry);
                 await _context.SaveChangesAsync();
+                await _activityLog.LogActivity("Deleted", "TimeEntry", entry.Description, entry.Id);
             }
             return RedirectToAction(nameof(Index));
         }
@@ -296,7 +300,10 @@ namespace TracKeee.Controllers
             }
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+            await _activityLog.LogActivity("Exported", "TimeEntry", null, null, $"CSV export - {entries.Count} entries");
             return File(bytes, "text/csv", $"TimeEntries_{DateTime.Now:yyyyMMdd}.csv");
         }
+
+        private readonly ActivityLogService _activityLog;
     }
 }

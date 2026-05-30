@@ -71,4 +71,5 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
             .OnDelete(DeleteBehavior.Restrict);
     }
     public DbSet<ActiveTimer> ActiveTimers { get; set; }
+    public DbSet<ActivityLog> ActivityLogs { get; set; }
 }

@@ -12,11 +12,13 @@ namespace TracKeee.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly OrganizationService _orgService;
+        private readonly ActivityLogService _activityLog;
 
-        public ClientsController(ApplicationDbContext context, OrganizationService orgService)
+        public ClientsController(ApplicationDbContext context, OrganizationService orgService, ActivityLogService activityLog)
         {
             _context = context;
             _orgService = orgService;
+            _activityLog = activityLog;
         }
 
         public async Task<IActionResult> Index(string? search)
@@ -79,6 +81,7 @@ namespace TracKeee.Controllers
                 client.PortalToken = Guid.NewGuid().ToString("N");
                 _context.Add(client);
                 await _context.SaveChangesAsync();
+                await _activityLog.LogActivity("Created", "Client", client.Name, client.Id);
                 return RedirectToAction(nameof(Index));
             }
             return View(client);
@@ -126,6 +129,7 @@ namespace TracKeee.Controllers
                 existing.Address = client.Address;
                 existing.Notes = client.Notes;
                 await _context.SaveChangesAsync();
+                await _activityLog.LogActivity("Updated", "Client", existing.Name, existing.Id);
                 return RedirectToAction(nameof(Index));
             }
             return View(client);
@@ -161,6 +165,7 @@ namespace TracKeee.Controllers
             {
                 _context.Clients.Remove(client);
                 await _context.SaveChangesAsync();
+                await _activityLog.LogActivity("Deleted", "Client", client.Name, client.Id);
             }
             return RedirectToAction(nameof(Index));
         }
@@ -185,6 +190,7 @@ namespace TracKeee.Controllers
             }
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+            await _activityLog.LogActivity("Exported", "Client", null, null, $"CSV export - {clients.Count} clients");
             return File(bytes, "text/csv", $"Clients_{DateTime.Now:yyyyMMdd}.csv");
         }
     }

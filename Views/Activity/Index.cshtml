@@ -1,0 +1,100 @@
+﻿@model List<TracKeee.Models.ActivityLog>
+
+@{
+    ViewData["Title"] = "Activity Log";
+}
+
+<h1>Activity Log</h1>
+<hr />
+
+<form method="get" class="mb-3">
+    <div class="row g-2" style="max-width: 600px;">
+        <div class="col-md-3">
+            <select name="entityType" class="form-select">
+                <option value="">All Types</option>
+                <option value="Client" selected="@(ViewBag.EntityType == "Client")">Clients</option>
+                <option value="Project" selected="@(ViewBag.EntityType == "Project")">Projects</option>
+                <option value="TimeEntry" selected="@(ViewBag.EntityType == "TimeEntry")">Time Entries</option>
+                <option value="Invoice" selected="@(ViewBag.EntityType == "Invoice")">Invoices</option>
+                <option value="Team" selected="@(ViewBag.EntityType == "Team")">Team</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="dateFrom" class="form-control" value="@ViewBag.DateFrom" />
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="dateTo" class="form-control" value="@ViewBag.DateTo" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-outline-secondary">Filter</button>
+        </div>
+        @if (!string.IsNullOrEmpty(ViewBag.EntityType as string) || ViewBag.DateFrom != null || ViewBag.DateTo != null)
+        {
+            <div class="col-auto">
+                <a asp-action="Index" class="btn btn-outline-danger">Clear</a>
+            </div>
+        }
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No activity recorded yet.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>When</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Type</th>
+                    <th>Name</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var log in Model)
+                {
+                    <tr>
+                        <td>
+                            <small>@log.Timestamp.ToLocalTime().ToString("dd MMM yyyy")</small><br />
+                            <small class="text-muted">@log.Timestamp.ToLocalTime().ToString("HH:mm")</small>
+                        </td>
+                        <td><small>@log.UserEmail</small></td>
+                        <td>
+                            <span class="badge @GetActionBadge(log.Action)">@log.Action</span>
+                        </td>
+                        <td>@log.EntityType</td>
+                        <td><strong>@(log.EntityName ?? "-")</strong></td>
+                        <td><small class="text-muted">@(log.Details ?? "-")</small></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@functions {
+    string GetActionBadge(string action)
+    {
+        return action switch
+        {
+            "Created" => "bg-success",
+            "Updated" => "bg-primary",
+            "Deleted" => "bg-danger",
+            "Generated" => "bg-info text-dark",
+            "Sent" => "bg-primary",
+            "Paid" => "bg-success",
+            "Emailed" => "bg-info text-dark",
+            "Exported" => "bg-warning text-dark",
+            "Downloaded" => "bg-secondary",
+            "Invited" => "bg-success",
+            "Changed Role" => "bg-warning text-dark",
+            "Removed" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}

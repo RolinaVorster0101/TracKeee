@@ -34,6 +34,7 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     options.Lockout.AllowedForNewUsers = true;
 }).AddEntityFrameworkStores<ApplicationDbContext>();
 
+builder.Services.AddScoped<TracKeee.Services.ActivityLogService>();
 builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, TracKeee.Services.BrevoEmailSender>();
 builder.Services.AddTransient<TracKeee.Services.InvoicePdfService>();
 builder.Services.AddHttpClient();

@@ -12,11 +12,13 @@ namespace TracKeee.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly OrganizationService _orgService;
+        private readonly ActivityLogService _activityLog;
 
-        public TimerController(ApplicationDbContext context, OrganizationService orgService)
+        public TimerController(ApplicationDbContext context, OrganizationService orgService, ActivityLogService activityLog)
         {
             _context = context;
             _orgService = orgService;
+            _activityLog = activityLog;
         }
 
         // GET: Timer/Status — returns JSON with current timer state
@@ -111,6 +113,7 @@ namespace TracKeee.Controllers
             _context.TimeEntries.Add(timeEntry);
             _context.ActiveTimers.Remove(timer);
             await _context.SaveChangesAsync();
+            await _activityLog.LogActivity("Created", "TimeEntry", timer.Description, timeEntry.Id, $"{hours}h logged via timer");
 
             return Json(new
             {

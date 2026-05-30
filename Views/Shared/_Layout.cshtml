@@ -55,6 +55,12 @@
                 <a class="nav-link text-dark" asp-area="" asp-controller="Reports" asp-action="Index">Reports</a>
             </li>
         }
+        @if (OrgService.HasPermission(navRole, "ViewAllTimeEntries"))
+        {
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-area="" asp-controller="Activity" asp-action="Index">Activity</a>
+            </li>
+        }
         @if (OrgService.HasPermission(navRole, "ManageSettings"))
         {
             <li class="nav-item">

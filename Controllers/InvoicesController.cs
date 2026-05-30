@@ -17,13 +17,14 @@ namespace TracKeee.Controllers
         private readonly YocoPaymentService _yocoService;
         private readonly InvoiceEmailService _emailService;
 
-        public InvoicesController(ApplicationDbContext context, OrganizationService orgService, InvoicePdfService pdfService, YocoPaymentService yocoService, InvoiceEmailService emailService)
+        public InvoicesController(ApplicationDbContext context, OrganizationService orgService, InvoicePdfService pdfService, YocoPaymentService yocoService, InvoiceEmailService emailService, ActivityLogService activityLog)
         {
             _context = context;
             _orgService = orgService;
             _pdfService = pdfService;
             _yocoService = yocoService;
             _emailService = emailService;
+            _activityLog = activityLog;
         }
 
         public async Task<IActionResult> Index(string? search, string? status, DateTime? dateFrom, DateTime? dateTo)
@@ -162,6 +163,7 @@ namespace TracKeee.Controllers
 
             _context.Invoices.Add(invoice);
             await _context.SaveChangesAsync();
+            await _activityLog.LogActivity("Generated", "Invoice", invoice.InvoiceNumber, invoice.Id, $"R {invoice.Total:N2}");
 
             foreach (var entry in timeEntries)
             {
@@ -184,6 +186,7 @@ namespace TracKeee.Controllers
 
             invoice.Status = InvoiceStatus.Sent;
             await _context.SaveChangesAsync();
+            await _activityLog.LogActivity("Sent", "Invoice", invoice.InvoiceNumber, invoice.Id);
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -198,6 +201,7 @@ namespace TracKeee.Controllers
 
             invoice.Status = InvoiceStatus.Paid;
             await _context.SaveChangesAsync();
+            await _activityLog.LogActivity("Paid", "Invoice", invoice.InvoiceNumber, invoice.Id);
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -238,6 +242,7 @@ namespace TracKeee.Controllers
                 }
                 _context.Invoices.Remove(invoice);
                 await _context.SaveChangesAsync();
+                await _activityLog.LogActivity("Deleted", "Invoice", invoice.InvoiceNumber, invoice.Id);
             }
             return RedirectToAction(nameof(Index));
         }
@@ -259,6 +264,7 @@ namespace TracKeee.Controllers
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
             var paymentUrl = $"{baseUrl}/Invoices/PayInvoice/{invoice.Id}";
             var pdfBytes = _pdfService.GenerateInvoicePdf(invoice, profile, paymentUrl);
+            await _activityLog.LogActivity("Downloaded", "Invoice", invoice.InvoiceNumber, invoice.Id, "PDF downloaded");
             return File(pdfBytes, "application/pdf", $"{invoice.InvoiceNumber}.pdf");
         }
 
@@ -326,6 +332,7 @@ namespace TracKeee.Controllers
                 {
                     invoice.Status = InvoiceStatus.Sent;
                     await _context.SaveChangesAsync();
+                    await _activityLog.LogActivity("Emailed", "Invoice", invoice.InvoiceNumber, invoice.Id, $"Sent to {invoice.Client.Email}");
                 }
                 TempData["Message"] = $"Invoice emailed to {invoice.Client.Email} successfully.";
             }
@@ -389,14 +396,14 @@ namespace TracKeee.Controllers
         }
 
         [AllowAnonymous]
-        public async Task<IActionResult> PaymentCancel(int invoiceId)
+        public IActionResult PaymentCancel(int invoiceId)
         {
             TempData["Message"] = "Payment was cancelled.";
             return RedirectToAction(nameof(PayInvoice), new { id = invoiceId });
         }
 
         [AllowAnonymous]
-        public async Task<IActionResult> PaymentFailed(int invoiceId)
+        public IActionResult PaymentFailed(int invoiceId)
         {
             TempData["Message"] = "Payment failed. Please try again.";
             return RedirectToAction(nameof(PayInvoice), new { id = invoiceId });
@@ -497,7 +504,10 @@ namespace TracKeee.Controllers
             }
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+            await _activityLog.LogActivity("Exported", "Invoice", null, null, $"CSV export - {invoices.Count} invoices");
             return File(bytes, "text/csv", $"Invoices_{DateTime.Now:yyyyMMdd}.csv");
         }
+
+        private readonly ActivityLogService _activityLog;
     }
 }
