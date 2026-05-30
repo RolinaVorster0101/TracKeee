@@ -76,6 +76,7 @@ namespace TracKeee.Controllers
             {
                 client.OrganizationId = await _orgService.GetCurrentOrganizationId();
                 client.CreatedAt = DateTime.UtcNow;
+                client.PortalToken = Guid.NewGuid().ToString("N");
                 _context.Add(client);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));

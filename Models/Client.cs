@@ -33,6 +33,14 @@ namespace TracKeee.Models
         [StringLength(1000)]
         public string? Notes { get; set; }
 
+        [StringLength(100)]
+        public string? PortalToken { get; set; }
+
+        [StringLength(6)]
+        public string? PortalVerificationCode { get; set; }
+
+        public DateTime? PortalCodeExpiry { get; set; }
+
         [Display(Name = "Created")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

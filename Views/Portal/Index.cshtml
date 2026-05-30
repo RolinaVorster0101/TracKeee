@@ -1,0 +1,36 @@
+﻿@{
+    ViewData["Title"] = "Client Portal";
+    Layout = "_Layout";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <img src="~/images/logo.svg" alt="TracKeee" height="50" class="mb-3" />
+                    <h2>Client Portal</h2>
+                    <p class="text-muted">Welcome, @ViewBag.ClientName</p>
+                </div>
+
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger">@TempData["Error"]</div>
+                }
+
+                <p>Enter your email address to receive a verification code.</p>
+
+                <form asp-action="SendCode" method="post">
+                    <input type="hidden" name="token" value="@ViewBag.Token" />
+
+                    <div class="form-group mb-3">
+                        <label class="control-label">Email Address</label>
+                        <input type="email" name="email" class="form-control" required placeholder="your@email.com" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Send Verification Code</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

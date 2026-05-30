@@ -1,0 +1,38 @@
+﻿@model TracKeee.Controllers.PortalVerifyModel
+@{
+    ViewData["Title"] = "Enter Code";
+    Layout = "_Layout";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <img src="~/images/logo.svg" alt="TracKeee" height="50" class="mb-3" />
+                    <h2>Verification Code</h2>
+                    <p class="text-muted">We've sent a 6-digit code to @Model.Email</p>
+                </div>
+
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger">@TempData["Error"]</div>
+                }
+
+                <form asp-action="VerifyCode" method="post">
+                    <input type="hidden" name="Token" value="@Model.Token" />
+                    <input type="hidden" name="Email" value="@Model.Email" />
+
+                    <div class="form-group mb-3">
+                        <label class="control-label">Verification Code</label>
+                        <input type="text" name="Code" class="form-control text-center" style="font-size: 24px; letter-spacing: 8px;" maxlength="6" required placeholder="000000" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Verify</button>
+                </form>
+
+                <p class="text-muted small mt-3 text-center">Code expires in 10 minutes.</p>
+            </div>
+        </div>
+    </div>
+</div>

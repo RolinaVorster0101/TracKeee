@@ -31,7 +31,10 @@ namespace TracKeee.Services
                     HtmlBody = htmlBody
                 };
 
-                builder.Attachments.Add(pdfFileName, pdfAttachment, new ContentType("application", "pdf"));
+                if (pdfAttachment != null && pdfAttachment.Length > 0)
+                {
+                    builder.Attachments.Add(pdfFileName, pdfAttachment, new ContentType("application", "pdf"));
+                }
 
                 message.Body = builder.ToMessageBody();
 

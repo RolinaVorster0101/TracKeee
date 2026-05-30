@@ -1,0 +1,87 @@
+﻿@model List<TracKeee.Models.Invoice>
+@using TracKeee.Models
+@{
+    ViewData["Title"] = "Client Portal";
+    Layout = "_Layout";
+    var client = ViewBag.Client as Client;
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-10">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h1>Welcome, @(client?.ContactPerson ?? client?.Name)</h1>
+                <p class="text-muted">@client?.Name — Client Portal</p>
+            </div>
+            <div class="text-end">
+                <small class="text-muted">Outstanding</small><br />
+                <strong class="fs-4 text-danger">R @(((decimal)ViewBag.TotalOutstanding).ToString("N2"))</strong>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <strong>Your Invoices</strong>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.Any())
+                {
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Invoice</th>
+                                <th>Date</th>
+                                <th>Due</th>
+                                <th class="text-end">Total</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var inv in Model)
+                            {
+                                <tr>
+                                    <td><strong>@inv.InvoiceNumber</strong></td>
+                                    <td>@inv.IssueDate.ToString("dd MMM yyyy")</td>
+                                    <td>@inv.DueDate.ToString("dd MMM yyyy")</td>
+                                    <td class="text-end"><strong>R @inv.Total.ToString("N2")</strong></td>
+                                    <td>
+                                        <span class="badge @GetStatusBadge(inv.Status)">@inv.Status</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <a asp-controller="Invoices" asp-action="PayInvoice" asp-route-id="@inv.Id" class="btn btn-sm btn-outline-secondary">View</a>
+                                        @if (inv.Status == InvoiceStatus.Sent || inv.Status == InvoiceStatus.Overdue)
+                                        {
+                                            <a asp-controller="Invoices" asp-action="PayInvoice" asp-route-id="@inv.Id" class="btn btn-sm btn-success">Pay</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="p-3 text-muted">No invoices to display.</div>
+                }
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <small class="text-muted">Powered by TracKeee</small>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatusBadge(InvoiceStatus status)
+    {
+        return status switch
+        {
+            InvoiceStatus.Sent => "bg-primary",
+            InvoiceStatus.Paid => "bg-success",
+            InvoiceStatus.Overdue => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}

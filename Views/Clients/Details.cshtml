@@ -31,6 +31,21 @@
 </dl>
 
 <div class="mt-4">
+    @if (!string.IsNullOrEmpty(Model.PortalToken))
+    {
+        <button onclick="copyPortalLink()" class="btn btn-info text-white">Copy Portal Link</button>
+    }
     <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Edit</a>
     <a asp-action="Index" class="btn btn-secondary">Back to List</a>
 </div>
+
+@section Scripts {
+    <script>
+        function copyPortalLink() {
+            var link = "@($"{Context.Request.Scheme}://{Context.Request.Host}/Portal/{Model.PortalToken}")";
+            navigator.clipboard.writeText(link).then(function() {
+                alert("Portal link copied! Share it with your client.");
+            });
+        }
+    </script>
+}
