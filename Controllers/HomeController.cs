@@ -224,4 +224,18 @@ public class HomeController : Controller
 
         return Json(data);
     }
+
+    [Route("Error/{code}")]
+    public IActionResult HttpError(int code)
+    {
+        ViewBag.ErrorCode = code;
+        ViewBag.ErrorMessage = code switch
+        {
+            404 => "Page not found",
+            403 => "Access denied",
+            500 => "Something went wrong",
+            _ => "An error occurred"
+        };
+        return View("HttpError");
+    }
 }
