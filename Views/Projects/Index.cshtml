@@ -1,128 +1,182 @@
-﻿@model IEnumerable<TracKeee.Models.Project>
+@model IEnumerable<TracKeee.Models.Project>
 
 @{
     ViewData["Title"] = "Projects";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>Projects</h1>
+<div class="page__header">
+    <div>
+        <h1 class="page__title">Projects</h1>
+        <p class="page__subtitle">Track your active projects and their status.</p>
+    </div>
     @{
         var projectRole = await OrgService.GetCurrentRole();
     }
-    @if (OrgService.HasPermission(projectRole, "ManageProjects"))
-    {
-        <a asp-action="Create" class="btn btn-primary">+ Add Project</a>
-    }
+    <div class="page__actions">
+        @if (OrgService.HasPermission(projectRole, "ManageProjects"))
+        {
+            <a asp-action="Create" class="btn btn--primary">+ Add Project</a>
+        }
+    </div>
 </div>
 
-<form method="get" class="mb-3">
-    <div class="row g-2" style="max-width: 600px;">
-        <div class="col">
-            <input type="text" name="search" class="form-control" placeholder="Search projects or clients..." value="@ViewBag.Search" />
-        </div>
-        <div class="col-auto">
-            <select name="status" class="form-select">
+<div class="card">
+    <div class="card__header">
+        <form method="get" style="margin:0;display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;">
+            <div class="filter-bar__search" style="width:280px;">
+                <svg class="filter-bar__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" name="search" class="form__input" placeholder="Search projects or clients..." value="@ViewBag.Search" />
+            </div>
+            <select name="status" class="form__select" onchange="this.form.submit()" style="width:auto;">
                 <option value="">All Statuses</option>
                 <option value="Active" selected="@(ViewBag.Status == "Active")">Active</option>
                 <option value="OnHold" selected="@(ViewBag.Status == "OnHold")">On Hold</option>
                 <option value="Completed" selected="@(ViewBag.Status == "Completed")">Completed</option>
                 <option value="Cancelled" selected="@(ViewBag.Status == "Cancelled")">Cancelled</option>
             </select>
-        </div>
-        <div class="col-auto">
-            <button type="submit" class="btn btn-outline-secondary">Filter</button>
-        </div>
+            @if (!string.IsNullOrEmpty(ViewBag.Search as string) || !string.IsNullOrEmpty(ViewBag.Status as string))
+            {
+                <a asp-action="Index" class="btn btn--ghost btn--sm" style="color:var(--color-danger);">Clear</a>
+            }
+        </form>
+    </div>
+
+    @if (!Model.Any())
+    {
         @if (!string.IsNullOrEmpty(ViewBag.Search as string) || !string.IsNullOrEmpty(ViewBag.Status as string))
         {
-            <div class="col-auto">
-                <a asp-action="Index" class="btn btn-outline-danger">Clear</a>
+            <div class="card__body">
+                <div class="alert alert--warning">
+                    No projects match your filters. <a asp-action="Index">Clear filters</a> to see all projects.
+                </div>
             </div>
         }
-    </div>
-</form>
-
-@if (!Model.Any())
-{
-    @if (!string.IsNullOrEmpty(ViewBag.Search as string) || !string.IsNullOrEmpty(ViewBag.Status as string))
-    {
-        <div class="alert alert-warning">
-            No projects match your filters. <a asp-action="Index">Clear filters</a> to see all projects.
-        </div>
-    }
-    else if (OrgService.HasPermission(projectRole, "ManageProjects"))
-    {
-        <div class="alert alert-info">
-            You don't have any projects yet. <a asp-action="Create">Add your first project</a> to get started.
-        </div>
+        else if (OrgService.HasPermission(projectRole, "ManageProjects"))
+        {
+            <div class="card__body">
+                <div class="alert alert--info">
+                    You don't have any projects yet. <a asp-action="Create">Add your first project</a> to get started.
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card__body">
+                <div class="alert alert--info">
+                    No projects assigned to you yet. Your team admin will assign you to projects.
+                </div>
+            </div>
+        }
     }
     else
     {
-        <div class="alert alert-info">
-            No projects assigned to you yet. Your team admin will assign you to projects.
+        <div class="card__body card__body--flush">
+            <div class="table-wrapper" style="border:none;box-shadow:none;border-radius:0;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model.Name)</th>
+                            <th>@Html.DisplayNameFor(model => model.Client)</th>
+                            @if (OrgService.HasPermission(projectRole, "ViewFinancials"))
+                            {
+                                <th>@Html.DisplayNameFor(model => model.HourlyRate)</th>
+                            }
+                            <th>@Html.DisplayNameFor(model => model.Status)</th>
+                            <th>@Html.DisplayNameFor(model => model.DueDate)</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td><strong>@Html.DisplayFor(modelItem => item.Name)</strong></td>
+                                <td>@Html.DisplayFor(modelItem => item.Client!.Name)</td>
+                                @if (OrgService.HasPermission(projectRole, "ViewFinancials"))
+                                {
+                                    <td>R @item.HourlyRate.ToString("N2")</td>
+                                }
+                                <td>
+                                    <span class="badge @GetStatusBadgeClass(item.Status)">@item.Status</span>
+                                </td>
+                                <td>@(item.DueDate?.ToString("dd MMM yyyy") ?? "-")</td>
+                                <td class="text-end">
+                                    <div class="dropdown">
+                                        <button type="button" class="dropdown__trigger" data-dropdown-trigger
+                                                aria-haspopup="true" aria-expanded="false"
+                                                aria-label="Actions for @item.Name">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <circle cx="12" cy="5" r="1"/>
+                                                <circle cx="12" cy="12" r="1"/>
+                                                <circle cx="12" cy="19" r="1"/>
+                                            </svg>
+                                        </button>
+                                        <div class="dropdown__menu" role="menu">
+                                            <a asp-action="Details" asp-route-id="@item.Id" class="dropdown__item" role="menuitem">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                                    <circle cx="12" cy="12" r="3"/>
+                                                </svg>
+                                                View
+                                            </a>
+                                            @if (OrgService.HasPermission(projectRole, "ManageProjects"))
+                                            {
+                                                <a asp-action="Edit" asp-route-id="@item.Id" class="dropdown__item" role="menuitem">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                                    </svg>
+                                                    Edit
+                                                </a>
+                                            }
+                                            @if (OrgService.HasPermission(projectRole, "Delete"))
+                                            {
+                                                <div class="dropdown__divider" role="separator"></div>
+                                                <a asp-action="Delete" asp-route-id="@item.Id" class="dropdown__item dropdown__item--danger" role="menuitem">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                        <polyline points="3 6 5 6 21 6"/>
+                                                        <path d="M19 6l-1 14H6L5 6"/>
+                                                    </svg>
+                                                    Delete
+                                                </a>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card__footer">
+            <div class="pagination" aria-label="Pagination">
+                <span class="pagination__info">Showing 1 to @Model.Count() of @Model.Count() projects</span>
+                <button type="button" class="pagination__btn" aria-label="Previous page" disabled>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <button type="button" class="pagination__btn pagination__btn--active" aria-label="Page 1" aria-current="page">1</button>
+                <button type="button" class="pagination__btn" aria-label="Next page" disabled>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+            </div>
         </div>
     }
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>@Html.DisplayNameFor(model => model.Name)</th>
-                    <th>@Html.DisplayNameFor(model => model.Client)</th>
-                    @if (OrgService.HasPermission(projectRole, "ViewFinancials"))
-                    {
-                        <th>@Html.DisplayNameFor(model => model.HourlyRate)</th>
-                    }
-                    <th>@Html.DisplayNameFor(model => model.Status)</th>
-                    <th>@Html.DisplayNameFor(model => model.DueDate)</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td><strong>@Html.DisplayFor(modelItem => item.Name)</strong></td>
-                        <td>@Html.DisplayFor(modelItem => item.Client!.Name)</td>
-                        @if (OrgService.HasPermission(projectRole, "ViewFinancials"))
-                        {
-                            <td>R @item.HourlyRate.ToString("N2")</td>
-                        }
-                        <td>
-                            <span class="badge @GetStatusBadgeClass(item.Status)">
-                                @item.Status
-                            </span>
-                        </td>
-                        <td>@(item.DueDate?.ToString("dd MMM yyyy") ?? "-")</td>
-                        <td class="text-end">
-                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">View</a>
-                            @if (OrgService.HasPermission(projectRole, "ManageProjects"))
-                            {
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Edit</a>
-                            }
-                            @if (OrgService.HasPermission(projectRole, "Delete"))
-                            {
-                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a>
-                            }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
+</div>
 
 @functions {
     string GetStatusBadgeClass(TracKeee.Models.ProjectStatus status)
     {
         return status switch
         {
-            TracKeee.Models.ProjectStatus.Active => "bg-success",
-            TracKeee.Models.ProjectStatus.OnHold => "bg-warning text-dark",
-            TracKeee.Models.ProjectStatus.Completed => "bg-secondary",
-            TracKeee.Models.ProjectStatus.Cancelled => "bg-danger",
-            _ => "bg-secondary"
+            TracKeee.Models.ProjectStatus.Active => "badge--success",
+            TracKeee.Models.ProjectStatus.OnHold => "badge--warning",
+            TracKeee.Models.ProjectStatus.Completed => "badge--neutral",
+            TracKeee.Models.ProjectStatus.Cancelled => "badge--danger",
+            _ => "badge--neutral"
         };
     }
 }
