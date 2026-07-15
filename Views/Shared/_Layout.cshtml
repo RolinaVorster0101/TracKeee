@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -9,253 +9,264 @@
     <link rel="stylesheet" href="~/TracKeee.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <a class="skip-link" href="#main-content">Skip to main content</a>
+<a class="skip-link" href="#main-content">Skip to main content</a>
 
-    <div class="app">
+<div class="app">
 
-        <!-- SIDEBAR -->
-        <aside class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
-            <div class="sidebar__header">
-                <a asp-area="" asp-controller="Home" asp-action="Index">
-                    <img src="~/images/logo-light.svg" alt="TracKeee" class="sidebar__logo" />
-                </a>
-                <button class="sidebar__close" id="sidebarClose" aria-label="Close navigation">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                </button>
-            </div>
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
+        <div class="sidebar__header">
+            <a asp-area="" asp-controller="Home" asp-action="Index">
+                <img src="~/images/logo-light.svg" alt="TracKeee" class="sidebar__logo" />
+            </a>
+            <button class="sidebar__close" id="sidebarClose" aria-label="Close navigation">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
 
-            <nav class="sidebar__nav">
-                <a class="sidebar__item" asp-area="" asp-controller="Home" asp-action="Index">
-                    <svg class="sidebar__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
-                    Home
-                </a>
+        <nav class="sidebar__nav">
+            @{
+                var currentController = (ViewContext.RouteData.Values["controller"] as string) ?? "";
+                string NavClass(string controller) =>
+                    string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase)
+                        ? "sidebar__item sidebar__item--active"
+                        : "sidebar__item";
+                string AriaCurrent(string controller) =>
+                    string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase)
+                        ? "page"
+                        : null;
+            }
+            <a class="@NavClass("Home")" aria-current="@AriaCurrent("Home")" asp-area="" asp-controller="Home" asp-action="Index">
+                <svg class="sidebar__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                Home
+            </a>
+@if (User.Identity != null && User.Identity.IsAuthenticated)
+{
+    try
+    {
+        var navRole = await OrgService.GetCurrentRole();
+
+        @if (OrgService.HasPermission(navRole, "ViewAllClients"))
+        {
+            <a class="@NavClass("Clients")" aria-current="@AriaCurrent("Clients")" asp-area="" asp-controller="Clients" asp-action="Index">
+                <svg class="sidebar__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Clients
+            </a>
+        }
+        <a class="@NavClass("Projects")" aria-current="@AriaCurrent("Projects")" asp-area="" asp-controller="Projects" asp-action="Index">
+            <svg class="sidebar__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            Projects
+        </a>
+        <a class="@NavClass("TimeEntries")" aria-current="@AriaCurrent("TimeEntries")" asp-area="" asp-controller="TimeEntries" asp-action="Index">
+            <svg class="sidebar__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Time
+        </a>
+        @if (OrgService.HasPermission(navRole, "ManageInvoices"))
+        {
+            <a class="@NavClass("Invoices")" aria-current="@AriaCurrent("Invoices")" asp-area="" asp-controller="Invoices" asp-action="Index">
+                <svg class="sidebar__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                Invoices
+            </a>
+        }
+        @if (OrgService.HasPermission(navRole, "ViewFinancials"))
+        {
+            <a class="@NavClass("Reports")" aria-current="@AriaCurrent("Reports")" asp-area="" asp-controller="Reports" asp-action="Index">
+                <svg class="sidebar__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Reports
+            </a>
+        }
+        @if (OrgService.HasPermission(navRole, "ViewAllTimeEntries"))
+        {
+            <a class="@NavClass("Activity")" aria-current="@AriaCurrent("Activity")" asp-area="" asp-controller="Activity" asp-action="Index">
+                <svg class="sidebar__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Activity
+            </a>
+        }
+        @if (OrgService.HasPermission(navRole, "ManageSettings"))
+        {
+            <a class="@NavClass("Settings")" aria-current="@AriaCurrent("Settings")" asp-area="" asp-controller="Settings" asp-action="Index">
+                <svg class="sidebar__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M19.07 4.93L4.93 19.07"/><circle cx="12" cy="12" r="10"/></svg>
+                Settings
+            </a>
+        }
+        @if (OrgService.HasPermission(navRole, "ManageTeam"))
+        {
+            <a class="@NavClass("Organizations")" aria-current="@AriaCurrent("Organizations")" asp-area="" asp-controller="Organizations" asp-action="Team">
+                <svg class="sidebar__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Team
+            </a>
+        }
+    }
+    catch
+    {
+        // User has no organization yet — show nothing
+    }
+}
+        </nav>
+
+        <div class="sidebar__footer">
+            <partial name="_LoginPartial" />
+        </div>
+    </aside>
+
+    <!-- Mobile overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <!-- Topbar -->
+        <header class="topbar">
+            <button class="topbar__hamburger" id="sidebarOpen" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <span class="topbar__title">@ViewData["Title"]</span>
+            <div class="topbar__actions">
                 @if (User.Identity != null && User.Identity.IsAuthenticated)
                 {
-                    try
-                    {
-                        var navRole = await OrgService.GetCurrentRole();
-
-                        @if (OrgService.HasPermission(navRole, "ViewAllClients"))
-                        {
-                            <a class="sidebar__item" asp-area="" asp-controller="Clients" asp-action="Index">
-                                <svg class="sidebar__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                                Clients
-                            </a>
-                        }
-                        <a class="sidebar__item" asp-area="" asp-controller="Projects" asp-action="Index">
-                            <svg class="sidebar__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
-                            Projects
-                        </a>
-                        <a class="sidebar__item" asp-area="" asp-controller="TimeEntries" asp-action="Index">
-                            <svg class="sidebar__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                            Time
-                        </a>
-                        @if (OrgService.HasPermission(navRole, "ManageInvoices"))
-                        {
-                            <a class="sidebar__item" asp-area="" asp-controller="Invoices" asp-action="Index">
-                                <svg class="sidebar__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
-                                Invoices
-                            </a>
-                        }
-                        @if (OrgService.HasPermission(navRole, "ViewFinancials"))
-                        {
-                            <a class="sidebar__item" asp-area="" asp-controller="Reports" asp-action="Index">
-                                <svg class="sidebar__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>
-                                Reports
-                            </a>
-                        }
-                        @if (OrgService.HasPermission(navRole, "ViewAllTimeEntries"))
-                        {
-                            <a class="sidebar__item" asp-area="" asp-controller="Activity" asp-action="Index">
-                                <svg class="sidebar__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
-                                Activity
-                            </a>
-                        }
-                        @if (OrgService.HasPermission(navRole, "ManageSettings"))
-                        {
-                            <a class="sidebar__item" asp-area="" asp-controller="Settings" asp-action="Index">
-                                <svg class="sidebar__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M19.07 4.93L4.93 19.07" /><circle cx="12" cy="12" r="10" /></svg>
-                                Settings
-                            </a>
-                        }
-                        @if (OrgService.HasPermission(navRole, "ManageTeam"))
-                        {
-                            <a class="sidebar__item" asp-area="" asp-controller="Organizations" asp-action="Team">
-                                <svg class="sidebar__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                                Team
-                            </a>
-                        }
-                    }
-                    catch
-                    {
-                        // User has no organization yet — show nothing
-                    }
+                    <div id="timerWidget"></div>
                 }
-            </nav>
-
-            <div class="sidebar__footer">
-                <partial name="_LoginPartial" />
             </div>
-        </aside>
+        </header>
 
-        <!-- Mobile overlay -->
-        <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+        <!-- Page content -->
+        <main role="main" class="page" id="main-content">
+            @RenderBody()
+        </main>
 
-        <!-- MAIN -->
-        <div class="main">
-
-            <!-- Topbar -->
-            <header class="topbar">
-                <button class="topbar__hamburger" id="sidebarOpen" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
-                </button>
-                <span class="topbar__title">@ViewData["Title"]</span>
-                <div class="topbar__actions">
-                    @if (User.Identity != null && User.Identity.IsAuthenticated)
-                    {
-                        <div id="timerWidget"></div>
-                    }
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer__grid">
+                <div>
+                    <img src="~/images/logo-light.svg" alt="TracKeee" class="footer__logo" />
+                    <p class="footer__tagline">Time tracking, invoicing, and client management for South African freelancers and small agencies.</p>
                 </div>
-            </header>
-
-            <!-- Page content -->
-            <main role="main" class="page" id="main-content">
-                @RenderBody()
-            </main>
-
-            <!-- Footer -->
-            <footer class="footer">
-                <div class="footer__grid">
-                    <div>
-                        <img src="~/images/logo-light.svg" alt="TracKeee" class="footer__logo" />
-                        <p class="footer__tagline">Time tracking, invoicing, and client management for South African freelancers and small agencies.</p>
-                    </div>
-                    <div>
-                        <div class="footer__heading">Quick Links</div>
-                        <ul class="footer__links">
-                            <li><a href="/" class="footer__link">Home</a></li>
-                            @if (User.Identity != null && User.Identity.IsAuthenticated)
+                <div>
+                    <div class="footer__heading">Quick Links</div>
+                    <ul class="footer__links">
+                        <li><a href="/" class="footer__link">Home</a></li>
+@if (User.Identity != null && User.Identity.IsAuthenticated)
+                        {
+                            try
                             {
-                                try
-                                {
-                                    var footerRole = await OrgService.GetCurrentRole();
+                                var footerRole = await OrgService.GetCurrentRole();
 
-                                    @if (OrgService.HasPermission(footerRole, "ViewAllClients"))
-                                    {
-                                        <li><a asp-controller="Clients" asp-action="Index" class="footer__link">Clients</a></li>
-                                    }
-                                    <li><a asp-controller="Projects" asp-action="Index" class="footer__link">Projects</a></li>
-                                    <li><a asp-controller="TimeEntries" asp-action="Index" class="footer__link">Time</a></li>
-                                    @if (OrgService.HasPermission(footerRole, "ManageInvoices"))
-                                    {
-                                        <li><a asp-controller="Invoices" asp-action="Index" class="footer__link">Invoices</a></li>
-                                    }
-                                }
-                                catch
+                                @if (OrgService.HasPermission(footerRole, "ViewAllClients"))
                                 {
-                                    // No organization yet
+                                    <li><a asp-controller="Clients" asp-action="Index" class="footer__link">Clients</a></li>
+                                }
+                                <li><a asp-controller="Projects" asp-action="Index" class="footer__link">Projects</a></li>
+                                <li><a asp-controller="TimeEntries" asp-action="Index" class="footer__link">Time</a></li>
+                                @if (OrgService.HasPermission(footerRole, "ManageInvoices"))
+                                {
+                                    <li><a asp-controller="Invoices" asp-action="Index" class="footer__link">Invoices</a></li>
                                 }
                             }
-                            else
+                            catch
                             {
-                                <li><a asp-area="Identity" asp-page="/Account/Register" class="footer__link">Get Started</a></li>
-                                <li><a asp-area="Identity" asp-page="/Account/Login" class="footer__link">Login</a></li>
+                                // No organization yet
                             }
-                        </ul>
-                    </div>
-                    <div>
-                        <div class="footer__heading">Legal</div>
-                        <ul class="footer__links">
-                            <li><a asp-controller="Home" asp-action="Privacy" class="footer__link">Privacy Policy</a></li>
-                            <li><a asp-controller="Home" asp-action="Terms" class="footer__link">Terms of Service</a></li>
-                            <li><a asp-controller="Home" asp-action="CookiePolicy" class="footer__link">Cookie Policy</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <div class="footer__heading">Contact</div>
-                        <ul class="footer__links">
-                            <li class="footer__link">Carolina Maria Vorster</li>
-                            <li class="footer__link">Weltevreden Park, Roodepoort</li>
-                            <li class="footer__link">South Africa</li>
-                            <li><a href="mailto:rolina@rolinavorster.com" class="footer__link">rolina@rolinavorster.com</a></li>
-                        </ul>
-                    </div>
+                        }
+                        else
+                        {
+                            <li><a asp-area="Identity" asp-page="/Account/Register" class="footer__link">Get Started</a></li>
+                            <li><a asp-area="Identity" asp-page="/Account/Login" class="footer__link">Login</a></li>
+                        }
+                    </ul>
                 </div>
-                <hr class="footer__divider" />
-                <div class="footer__copy">&copy; @DateTime.Now.Year TracKeee. All rights reserved.</div>
-            </footer>
+                <div>
+                    <div class="footer__heading">Legal</div>
+                    <ul class="footer__links">
+                        <li><a asp-controller="Home" asp-action="Privacy" class="footer__link">Privacy Policy</a></li>
+                        <li><a asp-controller="Home" asp-action="Terms" class="footer__link">Terms of Service</a></li>
+                        <li><a asp-controller="Home" asp-action="CookiePolicy" class="footer__link">Cookie Policy</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <div class="footer__heading">Contact</div>
+                    <ul class="footer__links">
+                        <li class="footer__link">Carolina Maria Vorster</li>
+                        <li class="footer__link">Weltevreden Park, Roodepoort</li>
+                        <li class="footer__link">South Africa</li>
+                        <li><a href="mailto:rolina@rolinavorster.com" class="footer__link">rolina@rolinavorster.com</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="footer__divider" />
+            <div class="footer__copy">&copy; @DateTime.Now.Year TracKeee. All rights reserved.</div>
+        </footer>
 
-        </div><!-- /.main -->
-    </div><!-- /.app -->
+    </div><!-- /.main -->
+</div><!-- /.app -->
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
 
-    <!-- Cookie Consent -->
-    <div id="cookieConsent" class="cookie-bar" style="display:none;">
-        <p class="cookie-bar__text">
-            We use essential cookies to keep you logged in and ensure security.
-            By continuing to use TracKeee, you agree to our
-            <a asp-controller="Home" asp-action="CookiePolicy">Cookie Policy</a>.
-        </p>
-        <div class="cookie-bar__actions">
-            <button onclick="acceptCookies()" class="btn btn--primary btn--sm">Accept</button>
-            <button onclick="declineCookies()" class="btn btn--secondary btn--sm">Decline</button>
-        </div>
+<!-- Cookie Consent -->
+<div id="cookieConsent" class="cookie-bar" style="display:none;">
+    <p class="cookie-bar__text">
+        We use essential cookies to keep you logged in and ensure security.
+        By continuing to use TracKeee, you agree to our
+        <a asp-controller="Home" asp-action="CookiePolicy">Cookie Policy</a>.
+    </p>
+    <div class="cookie-bar__actions">
+        <button onclick="acceptCookies()" class="btn btn--primary btn--sm">Accept</button>
+        <button onclick="declineCookies()" class="btn btn--secondary btn--sm">Decline</button>
     </div>
+</div>
 
-    <script>
-        (function() {
-            if (!localStorage.getItem('cookieConsent')) {
-                document.getElementById('cookieConsent').style.display = 'flex';
-            }
-        })();
-
-        function acceptCookies() {
-            localStorage.setItem('cookieConsent', 'accepted');
-            document.getElementById('cookieConsent').style.display = 'none';
+<script>
+    (function() {
+        if (!localStorage.getItem('cookieConsent')) {
+            document.getElementById('cookieConsent').style.display = 'flex';
         }
+    })();
 
-        function declineCookies() {
-            localStorage.setItem('cookieConsent', 'declined');
-            document.getElementById('cookieConsent').style.display = 'none';
-        }
-
-        // Sidebar mobile toggle
-        (function () {
-            var sidebar  = document.getElementById('sidebar');
-            var overlay  = document.getElementById('sidebarOverlay');
-            var btnOpen  = document.getElementById('sidebarOpen');
-            var btnClose = document.getElementById('sidebarClose');
-
-            function openSidebar() {
-                sidebar.classList.add('sidebar--open');
-                overlay.classList.add('sidebar-overlay--visible');
-                overlay.removeAttribute('aria-hidden');
-                if (btnOpen) btnOpen.setAttribute('aria-expanded', 'true');
-            }
-            function closeSidebar() {
-                sidebar.classList.remove('sidebar--open');
-                overlay.classList.remove('sidebar-overlay--visible');
-                overlay.setAttribute('aria-hidden', 'true');
-                if (btnOpen) btnOpen.setAttribute('aria-expanded', 'false');
-            }
-
-            if (btnOpen)  btnOpen.addEventListener('click', openSidebar);
-            if (btnClose) btnClose.addEventListener('click', closeSidebar);
-            if (overlay)  overlay.addEventListener('click', closeSidebar);
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape' && sidebar.classList.contains('sidebar--open')) closeSidebar();
-            });
-        })();
-    </script>
-
-    @if (User.Identity != null && User.Identity.IsAuthenticated)
-    {
-        <script src="~/js/timer.js"></script>
+    function acceptCookies() {
+        localStorage.setItem('cookieConsent', 'accepted');
+        document.getElementById('cookieConsent').style.display = 'none';
     }
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    function declineCookies() {
+        localStorage.setItem('cookieConsent', 'declined');
+        document.getElementById('cookieConsent').style.display = 'none';
+    }
+
+    // Sidebar mobile toggle
+    (function () {
+        var sidebar  = document.getElementById('sidebar');
+        var overlay  = document.getElementById('sidebarOverlay');
+        var btnOpen  = document.getElementById('sidebarOpen');
+        var btnClose = document.getElementById('sidebarClose');
+
+        function openSidebar() {
+            sidebar.classList.add('sidebar--open');
+            overlay.classList.add('sidebar-overlay--visible');
+            overlay.removeAttribute('aria-hidden');
+            if (btnOpen) btnOpen.setAttribute('aria-expanded', 'true');
+        }
+        function closeSidebar() {
+            sidebar.classList.remove('sidebar--open');
+            overlay.classList.remove('sidebar-overlay--visible');
+            overlay.setAttribute('aria-hidden', 'true');
+            if (btnOpen) btnOpen.setAttribute('aria-expanded', 'false');
+        }
+
+        if (btnOpen)  btnOpen.addEventListener('click', openSidebar);
+        if (btnClose) btnClose.addEventListener('click', closeSidebar);
+        if (overlay)  overlay.addEventListener('click', closeSidebar);
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && sidebar.classList.contains('sidebar--open')) closeSidebar();
+        });
+    })();
+</script>
+
+@if (User.Identity != null && User.Identity.IsAuthenticated)
+{
+    <script src="~/js/timer.js"></script>
+}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
