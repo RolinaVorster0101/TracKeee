@@ -260,6 +260,47 @@
             if (e.key === 'Escape' && sidebar.classList.contains('sidebar--open')) closeSidebar();
         });
     })();
+
+    // Dropdown menus (three-dot action buttons in tables)
+    (function () {
+        document.addEventListener('click', function (e) {
+            var trigger = e.target.closest('[data-dropdown-trigger]');
+            if (trigger) {
+                e.stopPropagation();
+                var menu = trigger.nextElementSibling;
+                var wasVisible = menu.classList.contains('dropdown__menu--visible');
+                // Close all open menus first
+                document.querySelectorAll('.dropdown__menu--visible').forEach(function (m) {
+                    m.classList.remove('dropdown__menu--visible');
+                    var t = m.previousElementSibling;
+                    if (t) t.setAttribute('aria-expanded', 'false');
+                });
+                // Toggle this one
+                if (!wasVisible) {
+                    menu.classList.add('dropdown__menu--visible');
+                    trigger.setAttribute('aria-expanded', 'true');
+                }
+            } else if (!e.target.closest('.dropdown__menu')) {
+                // Clicking outside any menu closes them all
+                document.querySelectorAll('.dropdown__menu--visible').forEach(function (m) {
+                    m.classList.remove('dropdown__menu--visible');
+                    var t = m.previousElementSibling;
+                    if (t) t.setAttribute('aria-expanded', 'false');
+                });
+            }
+        });
+
+        // Escape key closes any open dropdown
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.dropdown__menu--visible').forEach(function (m) {
+                    m.classList.remove('dropdown__menu--visible');
+                    var t = m.previousElementSibling;
+                    if (t) t.setAttribute('aria-expanded', 'false');
+                });
+            }
+        });
+    })();
 </script>
 
 @if (User.Identity != null && User.Identity.IsAuthenticated)
