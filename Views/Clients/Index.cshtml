@@ -13,10 +13,6 @@
         var clientRole = await OrgService.GetCurrentRole();
     }
     <div class="page__actions">
-        @if (OrgService.HasPermission(clientRole, "ExportData"))
-        {
-            <a asp-action="Export" class="btn btn--outline-secondary">Export CSV</a>
-        }
         @if (OrgService.HasPermission(clientRole, "ManageClients"))
         {
             <a asp-action="Create" class="btn btn--primary">+ Add Client</a>
@@ -24,75 +20,91 @@
     </div>
 </div>
 
-<form method="get" class="mb-3">
-    <div class="input-group" style="max-width: 400px;">
-        <input type="text" name="search" class="form-control" placeholder="Search clients..." value="@ViewBag.Search" />
-        <button type="submit" class="btn btn-outline-secondary">Search</button>
-        @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+<div class="card">
+    <div class="card__header">
+        <form method="get" style="margin:0;">
+            <div class="input-group" style="max-width: 400px;">
+                <input type="text" name="search" class="form-control" placeholder="Search clients..." value="@ViewBag.Search" />
+                <button type="submit" class="btn btn--outline-secondary">Search</button>
+                @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+                {
+                    <a asp-action="Index" class="btn btn--outline-danger">Clear</a>
+                }
+            </div>
+        </form>
+        @if (OrgService.HasPermission(clientRole, "ExportData"))
         {
-            <a asp-action="Index" class="btn btn-outline-danger">Clear</a>
+            <a asp-action="Export" class="btn btn--outline-secondary">Export CSV</a>
         }
     </div>
-</form>
 
-@if (!Model.Any())
-{
-    @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+    @if (!Model.Any())
     {
-        <div class="alert alert-warning">
-            No clients match your search. <a asp-action="Index">Clear search</a> to see all clients.
-        </div>
-    }
-    else if (OrgService.HasPermission(clientRole, "ManageClients"))
-    {
-        <div class="alert alert-info">
-            You don't have any clients yet. <a asp-action="Create">Add your first client</a> to get started.
-        </div>
+        @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+        {
+            <div class="card__body">
+                <div class="alert alert--warning">
+                    No clients match your search. <a asp-action="Index">Clear search</a> to see all clients.
+                </div>
+            </div>
+        }
+        else if (OrgService.HasPermission(clientRole, "ManageClients"))
+        {
+            <div class="card__body">
+                <div class="alert alert--info">
+                    You don't have any clients yet. <a asp-action="Create">Add your first client</a> to get started.
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card__body">
+                <div class="alert alert--info">
+                    No clients to display.
+                </div>
+            </div>
+        }
     }
     else
     {
-        <div class="alert alert-info">
-            No clients to display.
+        <div class="card__body card__body--flush">
+            <div class="table-wrapper" style="border:none;box-shadow:none;border-radius:0;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model.Name)</th>
+                            <th>@Html.DisplayNameFor(model => model.ContactPerson)</th>
+                            <th>@Html.DisplayNameFor(model => model.Email)</th>
+                            <th>@Html.DisplayNameFor(model => model.Phone)</th>
+                            <th>@Html.DisplayNameFor(model => model.VatNumber)</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td><strong>@Html.DisplayFor(modelItem => item.Name)</strong></td>
+                                <td>@Html.DisplayFor(modelItem => item.ContactPerson)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Email)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Phone)</td>
+                                <td>@Html.DisplayFor(modelItem => item.VatNumber)</td>
+                                <td class="text-end">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn--sm btn--outline-secondary">View</a>
+                                    @if (OrgService.HasPermission(clientRole, "ManageClients"))
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn--sm btn--outline">Edit</a>
+                                    }
+                                    @if (OrgService.HasPermission(clientRole, "Delete"))
+                                    {
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn--sm btn--outline-danger">Delete</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     }
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>@Html.DisplayNameFor(model => model.Name)</th>
-                    <th>@Html.DisplayNameFor(model => model.ContactPerson)</th>
-                    <th>@Html.DisplayNameFor(model => model.Email)</th>
-                    <th>@Html.DisplayNameFor(model => model.Phone)</th>
-                    <th>@Html.DisplayNameFor(model => model.VatNumber)</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td><strong>@Html.DisplayFor(modelItem => item.Name)</strong></td>
-                        <td>@Html.DisplayFor(modelItem => item.ContactPerson)</td>
-                        <td>@Html.DisplayFor(modelItem => item.Email)</td>
-                        <td>@Html.DisplayFor(modelItem => item.Phone)</td>
-                        <td>@Html.DisplayFor(modelItem => item.VatNumber)</td>
-                        <td class="text-end">
-                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">View</a>
-                            @if (OrgService.HasPermission(clientRole, "ManageClients"))
-                            {
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Edit</a>
-                            }
-                            @if (OrgService.HasPermission(clientRole, "Delete"))
-                            {
-                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a>
-                            }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
+</div>
