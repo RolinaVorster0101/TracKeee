@@ -23,12 +23,15 @@
 <div class="card">
     <div class="card__header">
         <form method="get" style="margin:0;">
-            <div class="input-group" style="max-width: 400px;">
-                <input type="text" name="search" class="form-control" placeholder="Search clients..." value="@ViewBag.Search" />
-                <button type="submit" class="btn btn--outline-secondary">Search</button>
+            <div class="filter-bar__search" style="width:320px;">
+                <svg class="filter-bar__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" name="search" class="form__input" placeholder="Search clients..." value="@ViewBag.Search" />
                 @if (!string.IsNullOrEmpty(ViewBag.Search as string))
                 {
-                    <a asp-action="Index" class="btn btn--outline-danger">Clear</a>
+                    <a asp-action="Index" class="btn btn--ghost btn--sm" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);color:var(--color-danger);">Clear</a>
                 }
             </div>
         </form>
