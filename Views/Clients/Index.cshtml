@@ -86,8 +86,17 @@
                     <tbody>
                         @foreach (var item in Model)
                         {
+                            var initials = string.Join("", (item.Name ?? "?")
+                                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                .Take(2)
+                                .Select(w => w[0].ToString().ToUpper()));
                             <tr>
-                                <td><strong>@Html.DisplayFor(modelItem => item.Name)</strong></td>
+                                <td>
+                                    <div style="display:flex;align-items:center;gap:var(--space-3);">
+                                        <div class="avatar" aria-hidden="true">@initials</div>
+                                        <strong>@Html.DisplayFor(modelItem => item.Name)</strong>
+                                    </div>
+                                </td>
                                 <td>@Html.DisplayFor(modelItem => item.ContactPerson)</td>
                                 <td>@Html.DisplayFor(modelItem => item.Email)</td>
                                 <td>@Html.DisplayFor(modelItem => item.Phone)</td>
