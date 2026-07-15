@@ -10,129 +10,138 @@
     <h1 class="mb-4">Dashboard</h1>
 
     <!-- Stats Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <h2 class="mb-0">@ViewBag.TotalClients</h2>
-                    <small class="text-muted">Clients</small>
-                </div>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-card__icon stat-card__icon--blue">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+            </div>
+            <div class="stat-card__top">
+                <div class="stat-card__label">Clients</div>
+                <div class="stat-card__value">@ViewBag.TotalClients</div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <h2 class="mb-0">@ViewBag.ActiveProjects</h2>
-                    <small class="text-muted">Active Projects</small>
-                </div>
+
+        <div class="stat-card">
+            <div class="stat-card__icon stat-card__icon--indigo">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
+            </div>
+            <div class="stat-card__top">
+                <div class="stat-card__label">Active Projects</div>
+                <div class="stat-card__value">@ViewBag.ActiveProjects</div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <h2 class="mb-0">@(((decimal)ViewBag.HoursThisMonth).ToString("N1"))h</h2>
-                    <small class="text-muted">Hours This Month</small>
-                </div>
+
+        <div class="stat-card">
+            <div class="stat-card__icon stat-card__icon--blue">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+            </div>
+            <div class="stat-card__top">
+                <div class="stat-card__label">Hours This Month</div>
+                <div class="stat-card__value">@(((decimal)ViewBag.HoursThisMonth).ToString("N1"))h</div>
             </div>
         </div>
+
         @if (OrgService.HasPermission(dashRole, "ViewFinancials"))
         {
-            <div class="col-md-3 mb-3">
-                <div class="card border-0 shadow-sm bg-success bg-opacity-10">
-                    <div class="card-body text-center">
-                        <h2 class="mb-0">R @(((decimal)ViewBag.UninvoicedAmount).ToString("N2"))</h2>
-                        <small class="text-muted">Uninvoiced</small>
-                    </div>
+            <div class="stat-card">
+                <div class="stat-card__icon stat-card__icon--amber">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
+                </div>
+                <div class="stat-card__top">
+                    <div class="stat-card__label">Uninvoiced</div>
+                    <div class="stat-card__value">R @(((decimal)ViewBag.UninvoicedAmount).ToString("N2"))</div>
                 </div>
             </div>
         }
     </div>
 
     <!-- Quick Actions -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <a asp-controller="TimeEntries" asp-action="Create" class="btn btn-primary me-2">+ Log Time</a>
-            @if (OrgService.HasPermission(dashRole, "ManageClients"))
-            {
-                <a asp-controller="Clients" asp-action="Create" class="btn btn-outline-primary me-2">+ Add Client</a>
-                <a asp-controller="Projects" asp-action="Create" class="btn btn-outline-primary me-2">+ Add Project</a>
-            }
-            @if (OrgService.HasPermission(dashRole, "ManageInvoices"))
-            {
-                <a asp-controller="Invoices" asp-action="Generate" class="btn btn-outline-success">+ Generate Invoice</a>
-            }
-        </div>
+    <div class="quick-actions">
+        <a asp-controller="TimeEntries" asp-action="Create" class="btn btn--primary">+ Log Time</a>
+        @if (OrgService.HasPermission(dashRole, "ManageClients"))
+        {
+            <a asp-controller="Clients" asp-action="Create" class="btn btn--secondary">+ Add Client</a>
+            <a asp-controller="Projects" asp-action="Create" class="btn btn--secondary">+ Add Project</a>
+        }
+        @if (OrgService.HasPermission(dashRole, "ManageInvoices"))
+        {
+            <a asp-controller="Invoices" asp-action="Generate" class="btn btn--outline">+ Generate Invoice</a>
+        }
     </div>
 
-    <div class="row">
+    <div class="dashboard-grid @(OrgService.HasPermission(dashRole, "ViewFinancials") ? "dashboard-grid--wide" : "dashboard-grid--full")">
         <!-- Recent Time Entries -->
-        <div class="@(OrgService.HasPermission(dashRole, "ViewFinancials") ? "col-md-7" : "col-12") mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <strong>Recent Time Entries</strong>
-                    <a asp-controller="TimeEntries" asp-action="Index" class="btn btn-sm btn-outline-secondary">View All</a>
-                </div>
-                <div class="card-body p-0">
-                    @{
-                        var recentEntries = ViewBag.RecentTimeEntries as List<TimeEntry>;
-                    }
-                    @if (recentEntries != null && recentEntries.Any())
-                    {
-                        <table class="table table-sm mb-0">
-                            <thead>
+        <div class="card">
+            <div class="card__header">
+                <span class="card__title">
+                    <svg class="card__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                    Recent Time Entries
+                </span>
+                <a asp-controller="TimeEntries" asp-action="Index" class="btn btn--sm btn--outline-secondary">View All</a>
+            </div>
+            <div class="card__body card__body--flush">
+                @{
+                    var recentEntries = ViewBag.RecentTimeEntries as List<TimeEntry>;
+                }
+                @if (recentEntries != null && recentEntries.Any())
+                {
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Project</th>
+                                <th class="text-end">Hours</th>
+                                @if (OrgService.HasPermission(dashRole, "ViewFinancials"))
+                                {
+                                    <th class="text-end">Amount</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var entry in recentEntries)
+                            {
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Project</th>
-                                    <th class="text-end">Hours</th>
+                                    <td>@entry.Date.ToString("dd MMM")</td>
+                                    <td>
+                                        <small class="text-muted">@entry.Project?.Client?.Name</small><br />
+                                        @entry.Project?.Name
+                                    </td>
+                                    <td class="text-end">@entry.Hours.ToString("N2")</td>
                                     @if (OrgService.HasPermission(dashRole, "ViewFinancials"))
                                     {
-                                        <th class="text-end">Amount</th>
+                                        <td class="text-end">R @((entry.Hours * (entry.Project?.HourlyRate ?? 0)).ToString("N2"))</td>
                                     }
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var entry in recentEntries)
-                                {
-                                    <tr>
-                                        <td>@entry.Date.ToString("dd MMM")</td>
-                                        <td>
-                                            <small class="text-muted">@entry.Project?.Client?.Name</small><br />
-                                            @entry.Project?.Name
-                                        </td>
-                                        <td class="text-end">@entry.Hours.ToString("N2")</td>
-                                        @if (OrgService.HasPermission(dashRole, "ViewFinancials"))
-                                        {
-                                            <td class="text-end">R @((entry.Hours * (entry.Project?.HourlyRate ?? 0)).ToString("N2"))</td>
-                                        }
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    }
-                    else
-                    {
-                        <div class="p-3 text-muted">No time entries yet. <a asp-controller="TimeEntries" asp-action="Create">Log your first hours.</a></div>
-                    }
-                </div>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div style="padding: var(--space-4);" class="text-muted">No time entries yet. <a asp-controller="TimeEntries" asp-action="Create">Log your first hours.</a></div>
+                }
             </div>
         </div>
 
         @if (OrgService.HasPermission(dashRole, "ViewFinancials"))
         {
             <!-- Recent Invoices & Summary -->
-            <div class="col-md-5 mb-4">
-                <div class="card border-0 shadow-sm mb-3">
-                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                        <strong>Recent Invoices</strong>
-                        <a asp-controller="Invoices" asp-action="Index" class="btn btn-sm btn-outline-secondary">View All</a>
+            <div style="display:flex;flex-direction:column;gap:var(--space-5);">
+                <div class="card">
+                    <div class="card__header">
+                        <span class="card__title">
+                            <svg class="card__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
+                            Recent Invoices
+                        </span>
+                        <a asp-controller="Invoices" asp-action="Index" class="btn btn--sm btn--outline-secondary">View All</a>
                     </div>
-                    <div class="card-body p-0">
+                    <div class="card__body card__body--flush">
                         @{
                             var recentInvoices = ViewBag.RecentInvoices as List<Invoice>;
                         }
                         @if (recentInvoices != null && recentInvoices.Any())
                         {
-                            <table class="table table-sm mb-0">
+                            <table class="table">
                                 <thead>
                                     <tr>
                                         <th>Invoice</th>
@@ -158,23 +167,28 @@
                         }
                         else
                         {
-                            <div class="p-3 text-muted">No invoices yet.</div>
+                            <div style="padding: var(--space-4);" class="text-muted">No invoices yet.</div>
                         }
                     </div>
                 </div>
 
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body">
-                        <h6 class="text-muted mb-3">Summary</h6>
-                        <div class="d-flex justify-content-between mb-2">
+                <div class="card">
+                    <div class="card__header">
+                        <span class="card__title">
+                            <svg class="card__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+                            Summary
+                        </span>
+                    </div>
+                    <div class="card__body card__body--flush">
+                        <div class="summary-row">
                             <span>Total Hours Logged</span>
                             <strong>@(((decimal)ViewBag.TotalHours).ToString("N1"))h</strong>
                         </div>
-                        <div class="d-flex justify-content-between mb-2">
+                        <div class="summary-row">
                             <span>Total Invoices</span>
                             <strong>@ViewBag.TotalInvoices</strong>
                         </div>
-                        <div class="d-flex justify-content-between mb-2">
+                        <div class="summary-row">
                             <span>Outstanding Amount</span>
                             <strong class="text-danger">R @(((decimal)ViewBag.UnpaidInvoices).ToString("N2"))</strong>
                         </div>
@@ -185,120 +199,113 @@
     </div>
 
     <!-- Charts -->
-    <div class="row mb-4">
-        <div class="col-md-4 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <h6 class="text-muted mb-3">Hours by Month</h6>
-                    <div style="height: 200px;"><canvas id="hoursChart"></canvas></div>
-                </div>
+    <div class="charts-grid">
+        <div class="card">
+            <div class="card__body">
+                <h6 class="text-muted mb-3">Hours by Month</h6>
+                <div style="height: 200px;"><canvas id="hoursChart"></canvas></div>
             </div>
         </div>
         @if (OrgService.HasPermission(dashRole, "ViewFinancials"))
         {
-            <div class="col-md-4 mb-4">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body">
-                        <h6 class="text-muted mb-3">Revenue by Month</h6>
-                        <div style="height: 200px;"><canvas id="revenueChart"></canvas></div>
-                    </div>
+            <div class="card">
+                <div class="card__body">
+                    <h6 class="text-muted mb-3">Revenue by Month</h6>
+                    <div style="height: 200px;"><canvas id="revenueChart"></canvas></div>
                 </div>
             </div>
         }
-        <div class="col-md-4 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <h6 class="text-muted mb-3">Hours by Client</h6>
-                    <div style="height: 200px;"><canvas id="clientsChart"></canvas></div>
-                </div>
+        <div class="card">
+            <div class="card__body">
+                <h6 class="text-muted mb-3">Hours by Client</h6>
+                <div style="height: 200px;"><canvas id="clientsChart"></canvas></div>
             </div>
         </div>
     </div>
 
     <!-- Recent Projects -->
-    <div class="row">
-        <div class="col-12 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <strong>Recent Projects</strong>
-                    <a asp-controller="Projects" asp-action="Index" class="btn btn-sm btn-outline-secondary">View All</a>
-                </div>
-                <div class="card-body p-0">
-                    @{
-                        var recentProjects = ViewBag.RecentProjects as List<Project>;
-                    }
-                    @if (recentProjects != null && recentProjects.Any())
-                    {
-                        <table class="table table-sm mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Project</th>
-                                    <th>Client</th>
-                                    @if (OrgService.HasPermission(dashRole, "ViewFinancials"))
-                                    {
-                                        <th class="text-end">Hourly Rate</th>
-                                    }
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var project in recentProjects)
+    <div class="card">
+        <div class="card__header">
+            <span class="card__title">
+                <svg class="card__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
+                Recent Projects
+            </span>
+            <a asp-controller="Projects" asp-action="Index" class="btn btn--sm btn--outline-secondary">View All</a>
+        </div>
+        <div class="card__body card__body--flush">
+            @{
+                var recentProjects = ViewBag.RecentProjects as List<Project>;
+            }
+            @if (recentProjects != null && recentProjects.Any())
+            {
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Project</th>
+                            <th>Client</th>
+                            @if (OrgService.HasPermission(dashRole, "ViewFinancials"))
+                            {
+                                <th class="text-end">Hourly Rate</th>
+                            }
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var project in recentProjects)
+                        {
+                            <tr>
+                                <td><strong>@project.Name</strong></td>
+                                <td>@project.Client?.Name</td>
+                                @if (OrgService.HasPermission(dashRole, "ViewFinancials"))
                                 {
-                                    <tr>
-                                        <td><strong>@project.Name</strong></td>
-                                        <td>@project.Client?.Name</td>
-                                        @if (OrgService.HasPermission(dashRole, "ViewFinancials"))
-                                        {
-                                            <td class="text-end">R @project.HourlyRate.ToString("N2")</td>
-                                        }
-                                        <td>
-                                            <span class="badge @GetProjectStatusBadge(project.Status)">@project.Status</span>
-                                        </td>
-                                    </tr>
+                                    <td class="text-end">R @project.HourlyRate.ToString("N2")</td>
                                 }
-                            </tbody>
-                        </table>
-                    }
-                    else
-                    {
-                        @if (OrgService.HasPermission(dashRole, "ManageProjects"))
-                        {
-                            <div class="p-3 text-muted">No projects yet. <a asp-controller="Projects" asp-action="Create">Add your first project.</a></div>
+                                <td>
+                                    <span class="badge @GetProjectStatusBadge(project.Status)">@project.Status</span>
+                                </td>
+                            </tr>
                         }
-                        else
-                        {
-                            <div class="p-3 text-muted">No projects assigned to you yet.</div>
-                        }
-                    }
-                </div>
-            </div>
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                @if (OrgService.HasPermission(dashRole, "ManageProjects"))
+                {
+                    <div style="padding: var(--space-4);" class="text-muted">No projects yet. <a asp-controller="Projects" asp-action="Create">Add your first project.</a></div>
+                }
+                else
+                {
+                    <div style="padding: var(--space-4);" class="text-muted">No projects assigned to you yet.</div>
+                }
+            }
         </div>
     </div>
 }
 else
 {
     <!-- Landing Page for Visitors -->
-    <div class="text-center py-5">
-        <img src="~/images/logo.svg" alt="TracKeee" height="72" class="mb-3" /><br />
-        <p class="lead mb-4">Time tracking, invoicing, and client management<br />built for South African freelancers and small agencies.</p>
+    <div class="landing">
+        <img src="~/images/logo.svg" alt="TracKeee" class="landing__logo" />
+        <p class="landing__lead">Time tracking, invoicing, and client management<br />built for South African freelancers and small agencies.</p>
 
-        <div class="mb-5">
-            <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-primary btn-lg me-2">Get Started Free</a>
-            <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-outline-secondary btn-lg">Login</a>
+        <div class="landing__cta">
+            <a asp-area="Identity" asp-page="/Account/Register" class="btn btn--primary btn--lg">Get Started Free</a>
+            <a asp-area="Identity" asp-page="/Account/Login" class="btn btn--secondary btn--lg">Login</a>
         </div>
 
-        <div class="row justify-content-center mt-5">
-            <div class="col-md-3 mb-4">
-                <h4>Track Time</h4>
-                <p class="text-muted">Log hours against projects and clients. See what you've earned in real time.</p>
+        <div class="landing__features">
+            <div class="feature">
+                <h4 class="feature__title">Track Time</h4>
+                <p class="feature__desc">Log hours against projects and clients. See what you've earned in real time.</p>
             </div>
-            <div class="col-md-3 mb-4">
-                <h4>Invoice with VAT</h4>
-                <p class="text-muted">Generate professional invoices with SA VAT (15%) calculated automatically.</p>
+            <div class="feature">
+                <h4 class="feature__title">Invoice with VAT</h4>
+                <p class="feature__desc">Generate professional invoices with SA VAT (15%) calculated automatically.</p>
             </div>
-            <div class="col-md-3 mb-4">
-                <h4>Get Paid</h4>
-                <p class="text-muted">Track invoice status from draft to paid. Know exactly what's outstanding.</p>
+            <div class="feature">
+                <h4 class="feature__title">Get Paid</h4>
+                <p class="feature__desc">Track invoice status from draft to paid. Know exactly what's outstanding.</p>
             </div>
         </div>
     </div>
@@ -313,23 +320,23 @@ else
     {
         return status switch
         {
-            InvoiceStatus.Draft => "bg-warning text-dark",
-            InvoiceStatus.Sent => "bg-primary",
-            InvoiceStatus.Paid => "bg-success",
-            InvoiceStatus.Overdue => "bg-danger",
-            InvoiceStatus.Cancelled => "bg-secondary",
-            _ => "bg-secondary"
+            InvoiceStatus.Draft => "badge--warning",
+            InvoiceStatus.Sent => "badge--info",
+            InvoiceStatus.Paid => "badge--success",
+            InvoiceStatus.Overdue => "badge--danger",
+            InvoiceStatus.Cancelled => "badge--neutral",
+            _ => "badge--neutral"
         };
     }
     string GetProjectStatusBadge(ProjectStatus status)
     {
         return status switch
         {
-            ProjectStatus.Active => "bg-success",
-            ProjectStatus.OnHold => "bg-warning text-dark",
-            ProjectStatus.Completed => "bg-secondary",
-            ProjectStatus.Cancelled => "bg-danger",
-            _ => "bg-secondary"
+            ProjectStatus.Active => "badge--success",
+            ProjectStatus.OnHold => "badge--warning",
+            ProjectStatus.Completed => "badge--neutral",
+            ProjectStatus.Cancelled => "badge--danger",
+            _ => "badge--neutral"
         };
     }
 }
