@@ -25,11 +25,11 @@
     <div class="card__body">
         <p class="text-muted mb-4" style="font-size:var(--font-size-sm);">The person must have a registered TracKeee account first.</p>
         <form asp-action="Invite" method="post" style="display:flex;align-items:flex-end;gap:var(--space-4);flex-wrap:wrap;">
-            <div class="form__group" style="flex:1;min-width:220px;">
+            <div class="form__group" style="flex:1;min-width:220px;max-width:380px;">
                 <label class="form__label">Email Address</label>
                 <input name="email" type="email" class="form__input" placeholder="colleague@example.com" required />
             </div>
-            <div class="form__group" style="min-width:180px;">
+            <div class="form__group" style="min-width:160px;">
                 <label class="form__label">Role</label>
                 <select name="role" class="form__select">
                     <option value="@OrganizationRole.Admin">Admin</option>
@@ -39,7 +39,7 @@
                 </select>
             </div>
             <div class="form__group">
-                <button type="submit" class="btn btn--primary">Invite</button>
+                <button type="submit" class="btn btn--primary" style="padding-top:var(--space-3);padding-bottom:var(--space-3);">Invite</button>
             </div>
         </form>
     </div>
@@ -86,7 +86,7 @@
                                         </form>
                                         <form asp-action="RemoveMember" method="post" style="display:inline;">
                                             <input type="hidden" name="memberId" value="@member.MemberId" />
-                                            <button type="submit" class="btn btn--sm btn--outline-danger" onclick="return confirm('Remove this team member?')">Remove</button>
+                                            <button type="submit" class="btn btn--outline-danger" style="padding-top:var(--space-2);padding-bottom:var(--space-2);" onclick="return confirm('Remove this team member?')">Remove</button>
                                         </form>
                                     </div>
                                 }
