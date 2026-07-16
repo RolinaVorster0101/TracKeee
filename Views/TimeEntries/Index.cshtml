@@ -40,10 +40,10 @@
             </select>
             <input type="date" name="dateFrom" class="form__input" value="@ViewBag.DateFrom" placeholder="From" style="width:auto;" />
             <input type="date" name="dateTo" class="form__input" value="@ViewBag.DateTo" placeholder="To" style="width:auto;" />
-            <button type="submit" class="btn btn--outline-secondary btn--sm">Filter</button>
+            <button type="submit" class="btn btn--outline-secondary" style="padding-top:var(--space-3);padding-bottom:var(--space-3);">Filter</button>
             @if (!string.IsNullOrEmpty(ViewBag.Search as string) || ViewBag.ProjectId != null || ViewBag.DateFrom != null || ViewBag.DateTo != null)
             {
-                <a asp-action="Index" class="btn btn--ghost btn--sm" style="color:var(--color-danger);">Clear</a>
+                <a asp-action="Index" class="btn btn--ghost" style="color:var(--color-danger);">Clear</a>
             }
         </form>
     </div>
