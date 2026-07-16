@@ -1,30 +1,34 @@
-﻿@{
+@{
     ViewData["Title"] = "Generate Invoice";
 }
 
-<h1>Generate Invoice</h1>
-<hr />
+<div class="page__header">
+    <div>
+        <h1 class="page__title">Generate Invoice</h1>
+        <p class="page__subtitle">Select a client to generate an invoice from their uninvoiced time entries.</p>
+    </div>
+</div>
 
-<p>Select a client to generate an invoice from their uninvoiced time entries.</p>
+<div>
+    <div class="card">
+        <div class="card__body">
+            <form asp-action="Generate" method="post" class="form">
+                <div class="form__group">
+                    <label class="form__label">Client</label>
+                    <select name="ClientId" class="form__select" required>
+                        <option value="">-- Select a client --</option>
+                        @foreach (var item in (SelectList)ViewBag.ClientId)
+                        {
+                            <option value="@item.Value">@item.Text</option>
+                        }
+                    </select>
+                </div>
 
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Generate" method="post">
-            <div class="form-group mb-3">
-                <label class="control-label">Client</label>
-                <select name="ClientId" class="form-select" required>
-                    <option value="">-- Select a client --</option>
-                    @foreach (var item in (SelectList)ViewBag.ClientId)
-                    {
-                        <option value="@item.Value">@item.Text</option>
-                    }
-                </select>
-            </div>
-
-            <div class="form-group">
-                <button type="submit" class="btn btn-primary">Generate Invoice</button>
-                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
-            </div>
-        </form>
+                <div class="form__actions">
+                    <button type="submit" class="btn btn--primary">Generate Invoice</button>
+                    <a asp-action="Index" class="btn btn--secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
