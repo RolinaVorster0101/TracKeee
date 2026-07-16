@@ -1,124 +1,147 @@
-﻿@model TracKeee.Models.BusinessProfile
+@model TracKeee.Models.BusinessProfile
 
 @{
     ViewData["Title"] = "Business Settings";
 }
 
-<h1>Business Settings</h1>
-<hr />
+<div class="page__header">
+    <div>
+        <h1 class="page__title">Business Settings</h1>
+        <p class="page__subtitle">Manage your business profile, banking, and payment details.</p>
+    </div>
+</div>
 
 @if (TempData["Message"] != null)
 {
-    <div class="alert alert-success">@TempData["Message"]</div>
+    <div class="alert alert--success mb-4">@TempData["Message"]</div>
 }
 
-<div class="row">
-    <div class="col-md-8">
-        <form asp-action="Index" method="post" enctype="multipart/form-data">
-            <input type="hidden" asp-for="Id" />
+<div>
+    <form asp-action="Index" method="post" enctype="multipart/form-data" class="form">
+        <input type="hidden" asp-for="Id" />
 
-            <h5 class="mb-3">Business Details</h5>
-
-            <div class="form-group mb-3">
-                <label asp-for="BusinessName" class="control-label"></label>
-                <input asp-for="BusinessName" class="form-control" />
-                <span asp-validation-for="BusinessName" class="text-danger"></span>
+        <!-- Business Details -->
+        <div class="card mb-4">
+            <div class="card__header">
+                <span class="card__title">Business Details</span>
             </div>
-
-            <div class="row">
-                <div class="form-group mb-3 col-md-6">
-                    <label asp-for="ContactName" class="control-label"></label>
-                    <input asp-for="ContactName" class="form-control" />
+            <div class="card__body">
+                <div class="form__group">
+                    <label asp-for="BusinessName" class="form__label"></label>
+                    <input asp-for="BusinessName" class="form__input" />
+                    <span asp-validation-for="BusinessName" class="form__error"></span>
                 </div>
-                <div class="form-group mb-3 col-md-6">
-                    <label asp-for="Email" class="control-label"></label>
-                    <input asp-for="Email" class="form-control" />
-                </div>
-            </div>
 
-            <div class="row">
-                <div class="form-group mb-3 col-md-6">
-                    <label asp-for="Phone" class="control-label"></label>
-                    <input asp-for="Phone" class="form-control" />
-                </div>
-                <div class="form-group mb-3 col-md-6">
-                    <label asp-for="VatNumber" class="control-label"></label>
-                    <input asp-for="VatNumber" class="form-control" />
-                </div>
-            </div>
-
-            <div class="form-group mb-3">
-                <label asp-for="Address" class="control-label"></label>
-                <textarea asp-for="Address" class="form-control" rows="2"></textarea>
-            </div>
-
-            <hr />
-            <h5 class="mb-3">Logo</h5>
-
-            @if (Model.LogoData != null)
-            {
-                <div class="mb-3">
-                    <img src="@Url.Action("Logo")" alt="Business Logo" style="max-height: 80px;" class="mb-2" /><br />
-                    <form asp-action="RemoveLogo" method="post" class="d-inline">
-                        <button type="submit" class="btn btn-sm btn-outline-danger">Remove Logo</button>
-                    </form>
-                </div>
-            }
-
-            <div class="form-group mb-3">
-                <label class="control-label">Upload Logo</label>
-                <input type="file" name="logo" class="form-control" accept="image/*" />
-                <small class="text-muted">Recommended: PNG or JPG, max 200x80px</small>
-            </div>
-
-            <hr />
-            <h5 class="mb-3">Banking Details</h5>
-
-            <div class="row">
-                <div class="form-group mb-3 col-md-6">
-                    <label asp-for="BankName" class="control-label"></label>
-                    <input asp-for="BankName" class="form-control" />
-                </div>
-                <div class="form-group mb-3 col-md-6">
-                    <label asp-for="AccountType" class="control-label"></label>
-                    <input asp-for="AccountType" class="form-control" placeholder="e.g. Cheque, Savings" />
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="form-group mb-3 col-md-6">
-                    <label asp-for="AccountNumber" class="control-label"></label>
-                    <input asp-for="AccountNumber" class="form-control" />
-                </div>
-                <div class="form-group mb-3 col-md-6">
-                    <label asp-for="BranchCode" class="control-label"></label>
-                    <input asp-for="BranchCode" class="form-control" />
-                </div>
-            </div>
-
-            <hr />
-            <h5 class="mb-3">Payment Integration</h5>
-
-            <div class="form-group mb-3">
-                <label asp-for="YocoSecretKey" class="control-label"></label>
-                @if (!string.IsNullOrEmpty(Model.YocoSecretKey))
-                {
-                    <div class="mb-2">
-                        <span class="text-success">✓ Key is saved: @(Model.YocoSecretKey.Substring(0, Math.Min(10, Model.YocoSecretKey.Length)))••••••••</span>
+                <div class="form__row form__row--2">
+                    <div class="form__group">
+                        <label asp-for="ContactName" class="form__label"></label>
+                        <input asp-for="ContactName" class="form__input" />
                     </div>
-                    <input name="YocoSecretKey" class="form-control" value="" placeholder="Leave blank to keep current key" />
-                    <small class="text-muted">Only enter a new key if you want to change it.</small>
-                }
-                else
-                {
-                    <input asp-for="YocoSecretKey" class="form-control" />
-                    <small class="text-muted">Your Yoco secret key (starts with sk_test_ or sk_live_). Found in Yoco Portal → Sales → Payment Gateway.</small>
-                }
-            </div>
+                    <div class="form__group">
+                        <label asp-for="Email" class="form__label"></label>
+                        <input asp-for="Email" class="form__input" />
+                    </div>
+                </div>
 
-            <div class="form-group mt-4">
-                <button type="submit" class="btn btn-primary">Save Settings</button>
+                <div class="form__row form__row--2">
+                    <div class="form__group">
+                        <label asp-for="Phone" class="form__label"></label>
+                        <input asp-for="Phone" class="form__input" />
+                    </div>
+                    <div class="form__group">
+                        <label asp-for="VatNumber" class="form__label"></label>
+                        <input asp-for="VatNumber" class="form__input" />
+                    </div>
+                </div>
+
+                <div class="form__group">
+                    <label asp-for="Address" class="form__label"></label>
+                    <textarea asp-for="Address" class="form__textarea" rows="2"></textarea>
+                </div>
             </div>
-        </form>
-    </div>
+        </div>
+
+        <!-- Logo -->
+        <div class="card mb-4">
+            <div class="card__header">
+                <span class="card__title">Logo</span>
+            </div>
+            <div class="card__body">
+                @if (Model.LogoData != null)
+                {
+                    <div class="mb-3">
+                        <img src="@Url.Action("Logo")" alt="Business Logo" style="max-height: 80px;" class="mb-2" /><br />
+                        <form asp-action="RemoveLogo" method="post" class="d-inline">
+                            <button type="submit" class="btn btn--sm btn--outline-danger">Remove Logo</button>
+                        </form>
+                    </div>
+                }
+
+                <div class="form__group">
+                    <label class="form__label">Upload Logo</label>
+                    <input type="file" name="logo" class="form__input" accept="image/*" />
+                    <span class="form__hint">Recommended: PNG or JPG, max 200x80px</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Banking Details -->
+        <div class="card mb-4">
+            <div class="card__header">
+                <span class="card__title">Banking Details</span>
+            </div>
+            <div class="card__body">
+                <div class="form__row form__row--2">
+                    <div class="form__group">
+                        <label asp-for="BankName" class="form__label"></label>
+                        <input asp-for="BankName" class="form__input" />
+                    </div>
+                    <div class="form__group">
+                        <label asp-for="AccountType" class="form__label"></label>
+                        <input asp-for="AccountType" class="form__input" placeholder="e.g. Cheque, Savings" />
+                    </div>
+                </div>
+
+                <div class="form__row form__row--2">
+                    <div class="form__group">
+                        <label asp-for="AccountNumber" class="form__label"></label>
+                        <input asp-for="AccountNumber" class="form__input" />
+                    </div>
+                    <div class="form__group">
+                        <label asp-for="BranchCode" class="form__label"></label>
+                        <input asp-for="BranchCode" class="form__input" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Integration -->
+        <div class="card mb-4">
+            <div class="card__header">
+                <span class="card__title">Payment Integration</span>
+            </div>
+            <div class="card__body">
+                <div class="form__group">
+                    <label asp-for="YocoSecretKey" class="form__label"></label>
+                    @if (!string.IsNullOrEmpty(Model.YocoSecretKey))
+                    {
+                        <div class="mb-2">
+                            <span class="text-success">✓ Key is saved: @(Model.YocoSecretKey.Substring(0, Math.Min(10, Model.YocoSecretKey.Length)))••••••••</span>
+                        </div>
+                        <input name="YocoSecretKey" class="form__input" value="" placeholder="Leave blank to keep current key" />
+                        <span class="form__hint">Only enter a new key if you want to change it.</span>
+                    }
+                    else
+                    {
+                        <input asp-for="YocoSecretKey" class="form__input" />
+                        <span class="form__hint">Your Yoco secret key (starts with sk_test_ or sk_live_). Found in Yoco Portal → Sales → Payment Gateway.</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="form__actions">
+            <button type="submit" class="btn btn--primary">Save Settings</button>
+        </div>
+    </form>
 </div>
