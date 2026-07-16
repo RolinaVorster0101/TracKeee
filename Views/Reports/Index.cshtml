@@ -1,70 +1,82 @@
-﻿@using TracKeee.Models
+@using TracKeee.Models
 @{
     ViewData["Title"] = "Reports";
 }
 
-<h1>Reports</h1>
-<hr />
-
-<form method="get" class="mb-4">
-    <div class="row g-2" style="max-width: 500px;">
-        <div class="col">
-            <label class="small text-muted">From</label>
-            <input type="date" name="dateFrom" class="form-control" value="@ViewBag.DateFrom" />
-        </div>
-        <div class="col">
-            <label class="small text-muted">To</label>
-            <input type="date" name="dateTo" class="form-control" value="@ViewBag.DateTo" />
-        </div>
-        <div class="col-auto d-flex align-items-end">
-            <button type="submit" class="btn btn-primary">Update</button>
-        </div>
+<div class="page__header">
+    <div>
+        <h1 class="page__title">Reports</h1>
+        <p class="page__subtitle">Insights into your hours, value, and invoicing.</p>
     </div>
-</form>
+</div>
+
+<div class="card mb-4">
+    <div class="card__body">
+        <form method="get" style="margin:0;display:flex;align-items:flex-end;gap:var(--space-4);flex-wrap:wrap;">
+            <div class="form__group">
+                <label class="form__label">From</label>
+                <input type="date" name="dateFrom" class="form__input" value="@ViewBag.DateFrom" style="width:auto;" />
+            </div>
+            <div class="form__group">
+                <label class="form__label">To</label>
+                <input type="date" name="dateTo" class="form__input" value="@ViewBag.DateTo" style="width:auto;" />
+            </div>
+            <div class="form__group">
+                <button type="submit" class="btn btn--primary" style="padding-top:var(--space-3);padding-bottom:var(--space-3);">Update</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <!-- Summary Cards -->
-<div class="row mb-4">
-    <div class="col-md-3 mb-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center">
-                <h3 class="mb-0">@(((decimal)ViewBag.TotalHours).ToString("N1"))h</h3>
-                <small class="text-muted">Total Hours</small>
-            </div>
+<div class="stats-grid mb-4">
+    <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--blue">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="stat-card__top">
+            <div class="stat-card__label">Total Hours</div>
+            <div class="stat-card__value">@(((decimal)ViewBag.TotalHours).ToString("N1"))h</div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center">
-                <h3 class="mb-0">R @(((decimal)ViewBag.TotalValue).ToString("N2"))</h3>
-                <small class="text-muted">Total Value</small>
-            </div>
+    <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--blue">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="stat-card__top">
+            <div class="stat-card__label">Total Value</div>
+            <div class="stat-card__value">R @(((decimal)ViewBag.TotalValue).ToString("N2"))</div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
-        <div class="card border-0 shadow-sm bg-success bg-opacity-10">
-            <div class="card-body text-center">
-                <h3 class="mb-0">R @(((decimal)ViewBag.TotalPaid).ToString("N2"))</h3>
-                <small class="text-muted">Paid</small>
-            </div>
+    <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--green">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="stat-card__top">
+            <div class="stat-card__label">Paid</div>
+            <div class="stat-card__value" style="color:var(--color-success);">R @(((decimal)ViewBag.TotalPaid).ToString("N2"))</div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
-        <div class="card border-0 shadow-sm bg-danger bg-opacity-10">
-            <div class="card-body text-center">
-                <h3 class="mb-0">R @(((decimal)ViewBag.TotalUnpaid).ToString("N2"))</h3>
-                <small class="text-muted">Outstanding</small>
-            </div>
+    <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--red">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="stat-card__top">
+            <div class="stat-card__label">Outstanding</div>
+            <div class="stat-card__value" style="color:var(--color-danger);">R @(((decimal)ViewBag.TotalUnpaid).ToString("N2"))</div>
         </div>
     </div>
 </div>
 
-<div class="row">
+<div class="dashboard-grid mb-4">
     <!-- Hours by Client -->
-    <div class="col-md-6 mb-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white"><strong>Hours by Client</strong></div>
-            <div class="card-body p-0">
-                <table class="table table-sm mb-0">
+    <div class="card">
+        <div class="card__header">
+            <span class="card__title">Hours by Client</span>
+        </div>
+        <div class="card__body card__body--flush">
+            <div class="table-wrapper" style="border:none;box-shadow:none;border-radius:0;">
+                <table class="table">
                     <thead>
                         <tr>
                             <th>Client</th>
@@ -91,11 +103,13 @@
     </div>
 
     <!-- Hours by Project -->
-    <div class="col-md-6 mb-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white"><strong>Hours by Project</strong></div>
-            <div class="card-body p-0">
-                <table class="table table-sm mb-0">
+    <div class="card">
+        <div class="card__header">
+            <span class="card__title">Hours by Project</span>
+        </div>
+        <div class="card__body card__body--flush">
+            <div class="table-wrapper" style="border:none;box-shadow:none;border-radius:0;">
+                <table class="table">
                     <thead>
                         <tr>
                             <th>Project</th>
@@ -125,61 +139,61 @@
 </div>
 
 <!-- Invoice Breakdown -->
-<div class="row">
-    <div class="col-12 mb-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white"><strong>Invoices in Period</strong></div>
-            <div class="card-body p-0">
-                @{
-                    var invoiceList = ViewBag.InvoiceBreakdown as List<Invoice>;
-                }
-                @if (invoiceList != null && invoiceList.Any())
-                {
-                    <table class="table table-sm mb-0">
-                        <thead>
+<div class="card">
+    <div class="card__header">
+        <span class="card__title">Invoices in Period</span>
+    </div>
+    <div class="card__body card__body--flush">
+        @{
+            var invoiceList = ViewBag.InvoiceBreakdown as List<Invoice>;
+        }
+        @if (invoiceList != null && invoiceList.Any())
+        {
+            <div class="table-wrapper" style="border:none;box-shadow:none;border-radius:0;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Invoice</th>
+                            <th>Client</th>
+                            <th>Date</th>
+                            <th class="text-end">Subtotal</th>
+                            <th class="text-end">VAT</th>
+                            <th class="text-end">Total</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var inv in invoiceList)
+                        {
                             <tr>
-                                <th>Invoice</th>
-                                <th>Client</th>
-                                <th>Date</th>
-                                <th class="text-end">Subtotal</th>
-                                <th class="text-end">VAT</th>
-                                <th class="text-end">Total</th>
-                                <th>Status</th>
+                                <td><a asp-controller="Invoices" asp-action="Details" asp-route-id="@inv.Id">@inv.InvoiceNumber</a></td>
+                                <td>@inv.Client?.Name</td>
+                                <td>@inv.IssueDate.ToString("dd MMM yyyy")</td>
+                                <td class="text-end">R @inv.Subtotal.ToString("N2")</td>
+                                <td class="text-end">R @inv.VatAmount.ToString("N2")</td>
+                                <td class="text-end"><strong>R @inv.Total.ToString("N2")</strong></td>
+                                <td>
+                                    <span class="badge @GetStatusBadge(inv.Status)">@inv.Status</span>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var inv in invoiceList)
-                            {
-                                <tr>
-                                    <td><a asp-controller="Invoices" asp-action="Details" asp-route-id="@inv.Id">@inv.InvoiceNumber</a></td>
-                                    <td>@inv.Client?.Name</td>
-                                    <td>@inv.IssueDate.ToString("dd MMM yyyy")</td>
-                                    <td class="text-end">R @inv.Subtotal.ToString("N2")</td>
-                                    <td class="text-end">R @inv.VatAmount.ToString("N2")</td>
-                                    <td class="text-end"><strong>R @inv.Total.ToString("N2")</strong></td>
-                                    <td>
-                                        <span class="badge @GetStatusBadge(inv.Status)">@inv.Status</span>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                        <tfoot>
-                            <tr class="table-dark">
-                                <td colspan="3"><strong>Total</strong></td>
-                                <td class="text-end"><strong>R @invoiceList.Sum(i => i.Subtotal).ToString("N2")</strong></td>
-                                <td class="text-end"><strong>R @invoiceList.Sum(i => i.VatAmount).ToString("N2")</strong></td>
-                                <td class="text-end"><strong>R @invoiceList.Sum(i => i.Total).ToString("N2")</strong></td>
-                                <td></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                }
-                else
-                {
-                    <div class="p-3 text-muted">No invoices in this period.</div>
-                }
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3"><strong>Total</strong></td>
+                            <td class="text-end"><strong>R @invoiceList.Sum(i => i.Subtotal).ToString("N2")</strong></td>
+                            <td class="text-end"><strong>R @invoiceList.Sum(i => i.VatAmount).ToString("N2")</strong></td>
+                            <td class="text-end"><strong>R @invoiceList.Sum(i => i.Total).ToString("N2")</strong></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
-        </div>
+        }
+        else
+        {
+            <div class="card__body text-muted">No invoices in this period.</div>
+        }
     </div>
 </div>
 
@@ -188,12 +202,12 @@
     {
         return status switch
         {
-            InvoiceStatus.Draft => "bg-warning text-dark",
-            InvoiceStatus.Sent => "bg-primary",
-            InvoiceStatus.Paid => "bg-success",
-            InvoiceStatus.Overdue => "bg-danger",
-            InvoiceStatus.Cancelled => "bg-secondary",
-            _ => "bg-secondary"
+            InvoiceStatus.Draft => "badge--warning",
+            InvoiceStatus.Sent => "badge--info",
+            InvoiceStatus.Paid => "badge--success",
+            InvoiceStatus.Overdue => "badge--danger",
+            InvoiceStatus.Cancelled => "badge--neutral",
+            _ => "badge--neutral"
         };
     }
 }
