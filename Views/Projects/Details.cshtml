@@ -1,36 +1,59 @@
-﻿@model TracKeee.Models.Project
+@model TracKeee.Models.Project
 
 @{
     ViewData["Title"] = "Project Details";
 }
 
-<h1>@Model.Name</h1>
-<hr />
-
-<dl class="row">
-    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Client)</dt>
-    <dd class="col-sm-9">@Model.Client?.Name</dd>
-
-    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Description)</dt>
-    <dd class="col-sm-9">@(Model.Description ?? "-")</dd>
-
-    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.HourlyRate)</dt>
-    <dd class="col-sm-9">R @Model.HourlyRate.ToString("N2")</dd>
-
-    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Status)</dt>
-    <dd class="col-sm-9">@Model.Status</dd>
-
-    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.StartDate)</dt>
-    <dd class="col-sm-9">@(Model.StartDate?.ToString("dd MMM yyyy") ?? "-")</dd>
-
-    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.DueDate)</dt>
-    <dd class="col-sm-9">@(Model.DueDate?.ToString("dd MMM yyyy") ?? "-")</dd>
-
-    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.CreatedAt)</dt>
-    <dd class="col-sm-9">@Model.CreatedAt.ToString("dd MMM yyyy")</dd>
-</dl>
-
-<div class="mt-4">
-    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Edit</a>
-    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+<div class="page__header">
+    <div>
+        <h1 class="page__title">@Model.Name</h1>
+        <p class="page__subtitle">Project details</p>
+    </div>
+    <div class="page__actions">
+        <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn--primary">Edit</a>
+        <a asp-action="Index" class="btn btn--secondary">Back to List</a>
+    </div>
 </div>
+
+<div>
+    <div class="card">
+        <div class="card__body">
+            <dl class="dl">
+                <dt>@Html.DisplayNameFor(model => model.Client)</dt>
+                <dd>@Model.Client?.Name</dd>
+
+                <dt>@Html.DisplayNameFor(model => model.Description)</dt>
+                <dd>@(Model.Description ?? "-")</dd>
+
+                <dt>@Html.DisplayNameFor(model => model.HourlyRate)</dt>
+                <dd>R @Model.HourlyRate.ToString("N2")</dd>
+
+                <dt>@Html.DisplayNameFor(model => model.Status)</dt>
+                <dd><span class="badge @GetStatusBadgeClass(Model.Status)">@Model.Status</span></dd>
+
+                <dt>@Html.DisplayNameFor(model => model.StartDate)</dt>
+                <dd>@(Model.StartDate?.ToString("dd MMM yyyy") ?? "-")</dd>
+
+                <dt>@Html.DisplayNameFor(model => model.DueDate)</dt>
+                <dd>@(Model.DueDate?.ToString("dd MMM yyyy") ?? "-")</dd>
+
+                <dt>@Html.DisplayNameFor(model => model.CreatedAt)</dt>
+                <dd>@Model.CreatedAt.ToString("dd MMM yyyy")</dd>
+            </dl>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatusBadgeClass(TracKeee.Models.ProjectStatus status)
+    {
+        return status switch
+        {
+            TracKeee.Models.ProjectStatus.Active => "badge--success",
+            TracKeee.Models.ProjectStatus.OnHold => "badge--warning",
+            TracKeee.Models.ProjectStatus.Completed => "badge--neutral",
+            TracKeee.Models.ProjectStatus.Cancelled => "badge--danger",
+            _ => "badge--neutral"
+        };
+    }
+}
