@@ -1,25 +1,26 @@
-﻿@page
+@page
 @{
     ViewData["Title"] = "Account Locked";
 }
 
-<div class="row justify-content-center mt-5">
-    <div class="col-md-6 text-center">
-        <div class="card shadow-sm">
-            <div class="card-body py-5">
-                <h1 class="text-danger mb-3">🔒</h1>
-                <h2>Account Locked</h2>
-                <p class="text-muted mt-3">
-                    Your account has been temporarily locked due to too many failed login attempts.
-                </p>
-                <p class="text-muted">
-                    Please wait <strong>15 minutes</strong> before trying again, or use the link below to reset your password.
-                </p>
-                <div class="mt-4">
-                    <a asp-page="./ForgotPassword" class="btn btn-primary">Reset Password</a>
-                    <a asp-page="./Login" class="btn btn-secondary">Try Again Later</a>
-                </div>
-            </div>
+<div class="auth-page">
+    <div class="auth-card" style="text-align:center;">
+        <div style="width:56px;height:56px;border-radius:var(--radius-full);background:var(--color-danger-bg);color:var(--color-danger);display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-4);">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+        </div>
+        <h1 class="auth-card__title">Account Locked</h1>
+        <p class="auth-card__subtitle">
+            Your account has been temporarily locked due to too many failed login attempts.
+        </p>
+        <p class="text-muted text-sm" style="margin-bottom:var(--space-6);">
+            Please wait <strong>15 minutes</strong> before trying again, or use the link below to reset your password.
+        </p>
+        <div style="display:flex;gap:var(--space-3);justify-content:center;flex-wrap:wrap;">
+            <a asp-page="./ForgotPassword" class="btn btn--primary">Reset Password</a>
+            <a asp-page="./Login" class="btn btn--secondary">Try Again Later</a>
         </div>
     </div>
 </div>
