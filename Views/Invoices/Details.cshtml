@@ -1,172 +1,183 @@
-﻿@model TracKeee.Models.Invoice
+@model TracKeee.Models.Invoice
 
 @{
     ViewData["Title"] = $"Invoice {Model.InvoiceNumber}";
     var profile = ViewBag.BusinessProfile as TracKeee.Models.BusinessProfile;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>Invoice @Model.InvoiceNumber</h1>
-    <span class="badge fs-6 @GetStatusBadgeClass(Model.Status)">@Model.Status</span>
-</div>
-<hr />
-
-<div class="row mb-4">
-    <div class="col-md-6">
-        @if (profile != null)
-        {
-            @if (profile.LogoData != null)
-            {
-                <img src="@Url.Action("BusinessLogo", "Invoices", new { userId = Model.UserId })" alt="Logo" style="max-height: 60px;" class="mb-2" /><br />
-            }
-            <strong class="fs-5">@profile.BusinessName</strong><br />
-            @if (!string.IsNullOrEmpty(profile.ContactName))
-            {
-                <span>@profile.ContactName</span><br />
-            }
-            @if (!string.IsNullOrEmpty(profile.Email))
-            {
-                <span>@profile.Email</span><br />
-            }
-            @if (!string.IsNullOrEmpty(profile.Phone))
-            {
-                <span>@profile.Phone</span><br />
-            }
-            @if (!string.IsNullOrEmpty(profile.Address))
-            {
-                <span>@profile.Address</span><br />
-            }
-            @if (!string.IsNullOrEmpty(profile.VatNumber))
-            {
-                <span>VAT: @profile.VatNumber</span>
-            }
-        }
+<div class="page__header">
+    <div>
+        <h1 class="page__title">Invoice @Model.InvoiceNumber</h1>
+        <p class="page__subtitle">Issued @Model.IssueDate.ToString("dd MMM yyyy")</p>
     </div>
-    <div class="col-md-6 text-md-end">
-        <h5>Bill To</h5>
-        <strong>@Model.Client?.Name</strong><br />
-        @if (!string.IsNullOrEmpty(Model.Client?.ContactPerson))
-        {
-            <span>@Model.Client.ContactPerson</span><br />
-        }
-        @if (!string.IsNullOrEmpty(Model.Client?.Email))
-        {
-            <span>@Model.Client.Email</span><br />
-        }
-        @if (!string.IsNullOrEmpty(Model.Client?.Address))
-        {
-            <span>@Model.Client.Address</span><br />
-        }
-        @if (!string.IsNullOrEmpty(Model.Client?.VatNumber))
-        {
-            <span>VAT: @Model.Client.VatNumber</span><br />
-        }
-        <div class="mt-3">
-            <span class="text-muted">Issue Date:</span> @Model.IssueDate.ToString("dd MMM yyyy")<br />
-            <span class="text-muted">Due Date:</span> @Model.DueDate.ToString("dd MMM yyyy")
-        </div>
+    <div class="page__actions">
+        <span class="badge @GetStatusBadgeClass(Model.Status)" style="font-size:var(--font-size-sm);padding:6px 12px;">@Model.Status</span>
     </div>
 </div>
-
-<h5>Time Entries</h5>
-<div class="table-responsive mb-4">
-    <table class="table table-sm">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Project</th>
-                <th>Description</th>
-                <th class="text-end">Hours</th>
-                <th class="text-end">Rate</th>
-                <th class="text-end">Amount</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var entry in Model.TimeEntries.OrderBy(t => t.Date))
-            {
-                <tr>
-                    <td>@entry.Date.ToString("dd MMM yyyy")</td>
-                    <td>@entry.Project?.Name</td>
-                    <td>@(entry.Description ?? "-")</td>
-                    <td class="text-end">@entry.Hours.ToString("N2")</td>
-                    <td class="text-end">R @((entry.Project?.HourlyRate ?? 0).ToString("N2"))</td>
-                    <td class="text-end">R @((entry.Hours * (entry.Project?.HourlyRate ?? 0)).ToString("N2"))</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>
-
-<div class="row justify-content-end">
-    <div class="col-md-4">
-        <table class="table table-sm">
-            <tr>
-                <td><strong>Subtotal</strong></td>
-                <td class="text-end">R @Model.Subtotal.ToString("N2")</td>
-            </tr>
-            <tr>
-                <td><strong>VAT (@Model.VatRate%)</strong></td>
-                <td class="text-end">R @Model.VatAmount.ToString("N2")</td>
-            </tr>
-            <tr class="table-dark">
-                <td><strong>Total</strong></td>
-                <td class="text-end"><strong>R @Model.Total.ToString("N2")</strong></td>
-            </tr>
-        </table>
-    </div>
-</div>
-
-@if (profile != null && !string.IsNullOrEmpty(profile.BankName))
-{
-    <div class="mb-4">
-        <strong>Banking Details</strong><br />
-        <span>Bank: @profile.BankName</span><br />
-        @if (!string.IsNullOrEmpty(profile.AccountType))
-        {
-            <span>Account Type: @profile.AccountType</span><br />
-        }
-        <span>Account: @profile.AccountNumber</span><br />
-        <span>Branch: @profile.BranchCode</span><br />
-        <span>Reference: @Model.InvoiceNumber</span>
-    </div>
-}
-
-@if (!string.IsNullOrEmpty(Model.Notes))
-{
-    <div class="mb-4">
-        <strong>Notes:</strong><br />
-        @Model.Notes
-    </div>
-}
 
 @if (TempData["Message"] != null)
 {
-    <div class="alert alert-info mt-4">@TempData["Message"]</div>
+    <div class="alert alert--info mb-4">@TempData["Message"]</div>
 }
 
-<div class="mt-4">
-    @if (Model.Status == TracKeee.Models.InvoiceStatus.Draft)
-    {
-        <form asp-action="MarkAsSent" asp-route-id="@Model.Id" method="post" class="d-inline">
-            <button type="submit" class="btn btn-primary">Mark as Sent</button>
-        </form>
-    }
-    @if (Model.Status == TracKeee.Models.InvoiceStatus.Sent)
-    {
-        <button onclick="copyPaymentLink()" class="btn btn-success">Copy Payment Link</button>
-        <form asp-action="MarkAsPaid" asp-route-id="@Model.Id" method="post" class="d-inline">
-            <button type="submit" class="btn btn-outline-success">Mark as Paid Manually</button>
-        </form>
-    }
-    @if (!string.IsNullOrEmpty(Model.Client?.Email))
-    {
-        <form asp-action="SendEmail" asp-route-id="@Model.Id" method="post" class="d-inline">
-            <button type="submit" class="btn btn-info text-white">Email to Client</button>
-        </form>
-    }
-    <a asp-action="DownloadPdf" asp-route-id="@Model.Id" class="btn btn-success">Download PDF</a>
-    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Delete</a>
-    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+<div>
+    <div class="card mb-4">
+        <div class="card__body">
+            <!-- From / To -->
+            <div class="dashboard-grid" style="margin-bottom:var(--space-6);">
+                <div>
+                    @if (profile != null)
+                    {
+                        @if (profile.LogoData != null)
+                        {
+                            <img src="@Url.Action("BusinessLogo", "Invoices", new { userId = Model.UserId })" alt="Logo" style="max-height: 60px;" class="mb-2" /><br />
+                        }
+                        <strong style="font-size:var(--font-size-lg);">@profile.BusinessName</strong><br />
+                        @if (!string.IsNullOrEmpty(profile.ContactName))
+                        {
+                            <span>@profile.ContactName</span><br />
+                        }
+                        @if (!string.IsNullOrEmpty(profile.Email))
+                        {
+                            <span>@profile.Email</span><br />
+                        }
+                        @if (!string.IsNullOrEmpty(profile.Phone))
+                        {
+                            <span>@profile.Phone</span><br />
+                        }
+                        @if (!string.IsNullOrEmpty(profile.Address))
+                        {
+                            <span>@profile.Address</span><br />
+                        }
+                        @if (!string.IsNullOrEmpty(profile.VatNumber))
+                        {
+                            <span>VAT: @profile.VatNumber</span>
+                        }
+                    }
+                </div>
+                <div style="text-align:right;">
+                    <div class="footer__heading" style="color:var(--color-text-muted);margin-bottom:var(--space-2);">Bill To</div>
+                    <strong>@Model.Client?.Name</strong><br />
+                    @if (!string.IsNullOrEmpty(Model.Client?.ContactPerson))
+                    {
+                        <span>@Model.Client.ContactPerson</span><br />
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Client?.Email))
+                    {
+                        <span>@Model.Client.Email</span><br />
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Client?.Address))
+                    {
+                        <span>@Model.Client.Address</span><br />
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Client?.VatNumber))
+                    {
+                        <span>VAT: @Model.Client.VatNumber</span><br />
+                    }
+                    <div style="margin-top:var(--space-3);">
+                        <span class="text-muted">Issue Date:</span> @Model.IssueDate.ToString("dd MMM yyyy")<br />
+                        <span class="text-muted">Due Date:</span> @Model.DueDate.ToString("dd MMM yyyy")
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time Entries -->
+            <div class="table-wrapper mb-4">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Project</th>
+                            <th>Description</th>
+                            <th class="text-end">Hours</th>
+                            <th class="text-end">Rate</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var entry in Model.TimeEntries.OrderBy(t => t.Date))
+                        {
+                            <tr>
+                                <td>@entry.Date.ToString("dd MMM yyyy")</td>
+                                <td>@entry.Project?.Name</td>
+                                <td>@(entry.Description ?? "-")</td>
+                                <td class="text-end">@entry.Hours.ToString("N2")</td>
+                                <td class="text-end">R @((entry.Project?.HourlyRate ?? 0).ToString("N2"))</td>
+                                <td class="text-end">R @((entry.Hours * (entry.Project?.HourlyRate ?? 0)).ToString("N2"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Totals -->
+            <div style="display:flex;justify-content:flex-end;">
+                <div style="min-width:280px;">
+                    <div class="summary-row" style="padding-left:0;padding-right:0;">
+                        <span>Subtotal</span>
+                        <strong>R @Model.Subtotal.ToString("N2")</strong>
+                    </div>
+                    <div class="summary-row" style="padding-left:0;padding-right:0;">
+                        <span>VAT (@Model.VatRate%)</span>
+                        <strong>R @Model.VatAmount.ToString("N2")</strong>
+                    </div>
+                    <div class="summary-row" style="padding-left:0;padding-right:0;border-top:2px solid var(--color-neutral-200);border-bottom:none;">
+                        <strong style="font-size:var(--font-size-lg);">Total</strong>
+                        <strong style="font-size:var(--font-size-lg);color:var(--color-brand-700);">R @Model.Total.ToString("N2")</strong>
+                    </div>
+                </div>
+            </div>
+
+            @if (profile != null && !string.IsNullOrEmpty(profile.BankName))
+            {
+                <div style="margin-top:var(--space-6);padding-top:var(--space-6);border-top:1px solid var(--color-neutral-200);">
+                    <strong>Banking Details</strong><br />
+                    <span>Bank: @profile.BankName</span><br />
+                    @if (!string.IsNullOrEmpty(profile.AccountType))
+                    {
+                        <span>Account Type: @profile.AccountType</span><br />
+                    }
+                    <span>Account: @profile.AccountNumber</span><br />
+                    <span>Branch: @profile.BranchCode</span><br />
+                    <span>Reference: @Model.InvoiceNumber</span>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.Notes))
+            {
+                <div style="margin-top:var(--space-6);">
+                    <strong>Notes:</strong><br />
+                    @Model.Notes
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;">
+        @if (Model.Status == TracKeee.Models.InvoiceStatus.Draft)
+        {
+            <form asp-action="MarkAsSent" asp-route-id="@Model.Id" method="post" style="display:inline;">
+                <button type="submit" class="btn btn--primary">Mark as Sent</button>
+            </form>
+        }
+        @if (Model.Status == TracKeee.Models.InvoiceStatus.Sent)
+        {
+            <button onclick="copyPaymentLink()" class="btn btn--success">Copy Payment Link</button>
+            <form asp-action="MarkAsPaid" asp-route-id="@Model.Id" method="post" style="display:inline;">
+                <button type="submit" class="btn btn--outline-success">Mark as Paid Manually</button>
+            </form>
+        }
+        @if (!string.IsNullOrEmpty(Model.Client?.Email))
+        {
+            <form asp-action="SendEmail" asp-route-id="@Model.Id" method="post" style="display:inline;">
+                <button type="submit" class="btn btn--secondary">Email to Client</button>
+            </form>
+        }
+        <a asp-action="DownloadPdf" asp-route-id="@Model.Id" class="btn btn--success">Download PDF</a>
+        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn--outline-danger">Delete</a>
+        <a asp-action="Index" class="btn btn--secondary">Back to List</a>
+    </div>
 </div>
 
 @section Scripts {
@@ -185,12 +196,12 @@
     {
         return status switch
         {
-            TracKeee.Models.InvoiceStatus.Draft => "bg-warning text-dark",
-            TracKeee.Models.InvoiceStatus.Sent => "bg-primary",
-            TracKeee.Models.InvoiceStatus.Paid => "bg-success",
-            TracKeee.Models.InvoiceStatus.Overdue => "bg-danger",
-            TracKeee.Models.InvoiceStatus.Cancelled => "bg-secondary",
-            _ => "bg-secondary"
+            TracKeee.Models.InvoiceStatus.Draft => "badge--warning",
+            TracKeee.Models.InvoiceStatus.Sent => "badge--info",
+            TracKeee.Models.InvoiceStatus.Paid => "badge--success",
+            TracKeee.Models.InvoiceStatus.Overdue => "badge--danger",
+            TracKeee.Models.InvoiceStatus.Cancelled => "badge--neutral",
+            _ => "badge--neutral"
         };
     }
 }
