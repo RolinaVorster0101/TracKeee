@@ -1,23 +1,26 @@
-﻿@model TracKeee.Models.Invoice
+@model TracKeee.Models.Invoice
 
 @{
     ViewData["Title"] = "Payment Successful";
     Layout = "_Layout";
 }
 
-<div class="row justify-content-center mt-5">
-    <div class="col-md-6 text-center">
-        <div class="card shadow-sm">
-            <div class="card-body py-5">
-                <img src="~/images/logo.svg" alt="TracKeee" height="40" class="mb-3" /><br />
-                <h1 class="text-success mb-3">✓</h1>
-                <h2>Payment Successful!</h2>
-                <p class="text-muted mt-3">
-                    Thank you for your payment of <strong>R @Model?.Total.ToString("N2")</strong>
-                    for invoice <strong>@Model?.InvoiceNumber</strong>.
-                </p>
-                <p class="text-muted">A confirmation has been recorded.</p>
-            </div>
+<div class="auth-page">
+    <div class="auth-card" style="text-align:center;">
+        <img src="~/images/logo.svg" alt="TracKeee" height="40" style="margin:0 auto var(--space-5);" />
+
+        <div style="width:56px;height:56px;border-radius:var(--radius-full);background:var(--color-success-bg);color:var(--color-success);display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-4);">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
         </div>
+
+        <h1 class="auth-card__title">Payment Successful!</h1>
+        <p class="auth-card__subtitle">
+            Thank you for your payment of <strong>R @Model?.Total.ToString("N2")</strong>
+            for invoice <strong>@Model?.InvoiceNumber</strong>.
+        </p>
+        <p class="text-muted text-sm">A confirmation has been recorded.</p>
     </div>
 </div>
