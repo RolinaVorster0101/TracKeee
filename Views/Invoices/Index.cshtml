@@ -1,36 +1,45 @@
-﻿@model IEnumerable<TracKeee.Models.Invoice>
+@model IEnumerable<TracKeee.Models.Invoice>
 
 @{
     ViewData["Title"] = "Invoices";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>Invoices</h1>
+<div class="page__header">
+    <div>
+        <h1 class="page__title">Invoices</h1>
+        <p class="page__subtitle">Manage and track all your invoices.</p>
+    </div>
     @{
         var invoiceRole = await OrgService.GetCurrentRole();
     }
-    @if (OrgService.HasPermission(invoiceRole, "ManageInvoices"))
-    {
-        <a asp-action="Generate" class="btn btn-primary">+ Generate Invoice</a>
-        @if (OrgService.HasPermission(invoiceRole, "ExportData"))
+    <div class="page__actions">
+        @if (OrgService.HasPermission(invoiceRole, "ManageInvoices"))
         {
-            <a asp-action="Export" class="btn btn-outline-secondary">Export CSV</a>
+            @if (OrgService.HasPermission(invoiceRole, "ExportData"))
+            {
+                <a asp-action="Export" class="btn btn--outline-secondary">Export CSV</a>
+            }
+            <a asp-action="Generate" class="btn btn--primary">+ Generate Invoice</a>
         }
-    }
+    </div>
 </div>
 
 @if (TempData["Message"] != null)
 {
-    <div class="alert alert-info">@TempData["Message"]</div>
+    <div class="alert alert--info mb-4">@TempData["Message"]</div>
 }
 
-<form method="get" class="mb-3">
-    <div class="row g-2">
-        <div class="col-md-3">
-            <input type="text" name="search" class="form-control" placeholder="Search invoice # or client..." value="@ViewBag.Search" />
-        </div>
-        <div class="col-md-2">
-            <select name="status" class="form-select">
+<div class="card">
+    <div class="card__header">
+        <form method="get" style="margin:0;display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;width:100%;">
+            <div class="filter-bar__search" style="width:240px;">
+                <svg class="filter-bar__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" name="search" class="form__input" placeholder="Search invoice # or client..." value="@ViewBag.Search" />
+            </div>
+            <select name="status" class="form__select" style="width:auto;" onchange="this.form.submit()">
                 <option value="">All Statuses</option>
                 <option value="Draft" selected="@(ViewBag.Status == "Draft")">Draft</option>
                 <option value="Sent" selected="@(ViewBag.Status == "Sent")">Sent</option>
@@ -38,94 +47,128 @@
                 <option value="Overdue" selected="@(ViewBag.Status == "Overdue")">Overdue</option>
                 <option value="Cancelled" selected="@(ViewBag.Status == "Cancelled")">Cancelled</option>
             </select>
-        </div>
-        <div class="col-md-2">
-            <input type="date" name="dateFrom" class="form-control" value="@ViewBag.DateFrom" placeholder="From" />
-        </div>
-        <div class="col-md-2">
-            <input type="date" name="dateTo" class="form-control" value="@ViewBag.DateTo" placeholder="To" />
-        </div>
-        <div class="col-auto">
-            <button type="submit" class="btn btn-outline-secondary">Filter</button>
-        </div>
+            <input type="date" name="dateFrom" class="form__input" value="@ViewBag.DateFrom" placeholder="From" style="width:auto;" />
+            <input type="date" name="dateTo" class="form__input" value="@ViewBag.DateTo" placeholder="To" style="width:auto;" />
+            <button type="submit" class="btn btn--outline-secondary" style="padding-top:var(--space-3);padding-bottom:var(--space-3);">Filter</button>
+            @if (!string.IsNullOrEmpty(ViewBag.Search as string) || !string.IsNullOrEmpty(ViewBag.Status as string) || ViewBag.DateFrom != null || ViewBag.DateTo != null)
+            {
+                <a asp-action="Index" class="btn btn--ghost" style="color:var(--color-danger);">Clear</a>
+            }
+        </form>
+    </div>
+
+    @if (!Model.Any())
+    {
         @if (!string.IsNullOrEmpty(ViewBag.Search as string) || !string.IsNullOrEmpty(ViewBag.Status as string) || ViewBag.DateFrom != null || ViewBag.DateTo != null)
         {
-            <div class="col-auto">
-                <a asp-action="Index" class="btn btn-outline-danger">Clear</a>
+            <div class="card__body">
+                <div class="alert alert--warning">
+                    No invoices match your filters. <a asp-action="Index">Clear filters</a> to see all invoices.
+                </div>
             </div>
         }
-    </div>
-</form>
-
-@if (!Model.Any())
-{
-    @if (!string.IsNullOrEmpty(ViewBag.Search as string) || !string.IsNullOrEmpty(ViewBag.Status as string) || ViewBag.DateFrom != null || ViewBag.DateTo != null)
-    {
-        <div class="alert alert-warning">
-            No invoices match your filters. <a asp-action="Index">Clear filters</a> to see all invoices.
-        </div>
+        else
+        {
+            <div class="card__body">
+                <div class="alert alert--info">
+                    No invoices yet. <a asp-action="Generate">Generate your first invoice</a> from logged time entries.
+                </div>
+            </div>
+        }
     }
     else
     {
-        <div class="alert alert-info">
-            No invoices yet. <a asp-action="Generate">Generate your first invoice</a> from logged time entries.
+        <div class="card__body card__body--flush">
+            <div class="table-wrapper" style="border:none;box-shadow:none;border-radius:0;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model.InvoiceNumber)</th>
+                            <th>@Html.DisplayNameFor(model => model.Client)</th>
+                            <th>@Html.DisplayNameFor(model => model.IssueDate)</th>
+                            <th>@Html.DisplayNameFor(model => model.DueDate)</th>
+                            <th class="text-end">@Html.DisplayNameFor(model => model.Total)</th>
+                            <th>@Html.DisplayNameFor(model => model.Status)</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td><strong>@item.InvoiceNumber</strong></td>
+                                <td>@item.Client?.Name</td>
+                                <td>@item.IssueDate.ToString("dd MMM yyyy")</td>
+                                <td>@item.DueDate.ToString("dd MMM yyyy")</td>
+                                <td class="text-end"><strong>R @item.Total.ToString("N2")</strong></td>
+                                <td>
+                                    <span class="badge @GetStatusBadgeClass(item.Status)">@item.Status</span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="dropdown">
+                                        <button type="button" class="dropdown__trigger" data-dropdown-trigger
+                                                aria-haspopup="true" aria-expanded="false"
+                                                aria-label="Actions for invoice @item.InvoiceNumber">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <circle cx="12" cy="5" r="1"/>
+                                                <circle cx="12" cy="12" r="1"/>
+                                                <circle cx="12" cy="19" r="1"/>
+                                            </svg>
+                                        </button>
+                                        <div class="dropdown__menu" role="menu">
+                                            <a asp-action="Details" asp-route-id="@item.Id" class="dropdown__item" role="menuitem">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                                    <circle cx="12" cy="12" r="3"/>
+                                                </svg>
+                                                View
+                                            </a>
+                                            @if (OrgService.HasPermission(invoiceRole, "Delete"))
+                                            {
+                                                <div class="dropdown__divider" role="separator"></div>
+                                                <a asp-action="Delete" asp-route-id="@item.Id" class="dropdown__item dropdown__item--danger" role="menuitem">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                        <polyline points="3 6 5 6 21 6"/>
+                                                        <path d="M19 6l-1 14H6L5 6"/>
+                                                    </svg>
+                                                    Delete
+                                                </a>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card__footer">
+            <div class="pagination" aria-label="Pagination">
+                <span class="pagination__info">Showing 1 to @Model.Count() of @Model.Count() invoices</span>
+                <button type="button" class="pagination__btn" aria-label="Previous page" disabled>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <button type="button" class="pagination__btn pagination__btn--active" aria-label="Page 1" aria-current="page">1</button>
+                <button type="button" class="pagination__btn" aria-label="Next page" disabled>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+            </div>
         </div>
     }
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>@Html.DisplayNameFor(model => model.InvoiceNumber)</th>
-                    <th>@Html.DisplayNameFor(model => model.Client)</th>
-                    <th>@Html.DisplayNameFor(model => model.IssueDate)</th>
-                    <th>@Html.DisplayNameFor(model => model.DueDate)</th>
-                    <th class="text-end">@Html.DisplayNameFor(model => model.Total)</th>
-                    <th>@Html.DisplayNameFor(model => model.Status)</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td><strong>@item.InvoiceNumber</strong></td>
-                        <td>@item.Client?.Name</td>
-                        <td>@item.IssueDate.ToString("dd MMM yyyy")</td>
-                        <td>@item.DueDate.ToString("dd MMM yyyy")</td>
-                        <td class="text-end"><strong>R @item.Total.ToString("N2")</strong></td>
-                        <td>
-                            <span class="badge @GetStatusBadgeClass(item.Status)">
-                                @item.Status
-                            </span>
-                        </td>
-                        <td class="text-end">
-                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">View</a>
-                            @if (OrgService.HasPermission(invoiceRole, "Delete"))
-                            {
-                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a>
-                            }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
+</div>
 
 @functions {
     string GetStatusBadgeClass(TracKeee.Models.InvoiceStatus status)
     {
         return status switch
         {
-            TracKeee.Models.InvoiceStatus.Draft => "bg-warning text-dark",
-            TracKeee.Models.InvoiceStatus.Sent => "bg-primary",
-            TracKeee.Models.InvoiceStatus.Paid => "bg-success",
-            TracKeee.Models.InvoiceStatus.Overdue => "bg-danger",
-            TracKeee.Models.InvoiceStatus.Cancelled => "bg-secondary",
-            _ => "bg-secondary"
+            TracKeee.Models.InvoiceStatus.Draft => "badge--warning",
+            TracKeee.Models.InvoiceStatus.Sent => "badge--info",
+            TracKeee.Models.InvoiceStatus.Paid => "badge--success",
+            TracKeee.Models.InvoiceStatus.Overdue => "badge--danger",
+            TracKeee.Models.InvoiceStatus.Cancelled => "badge--neutral",
+            _ => "badge--neutral"
         };
     }
 }
